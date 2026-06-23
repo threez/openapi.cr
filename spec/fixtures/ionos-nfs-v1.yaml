@@ -1,0 +1,1169 @@
+openapi: "3.0.3"
+info:
+  title: IONOS CLOUD - Network File Storage API
+  description: |
+    The RESTful API for managing Network File Storage.
+  version: 0.1.6
+  contact:
+    name: IONOS CLOUD Support
+    url: https://docs.ionos.com/cloud/support/general-information/contact-information
+    email: support@cloud.ionos.com
+externalDocs:
+  url: https://docs.ionos.com/cloud/
+  description: IONOS CLOUD Documentation
+servers:
+- url: https://nfs.de-fra.ionos.com
+  description: service endpoint for location de-fra
+- url: https://nfs.de-txl.ionos.com
+  description: service endpoint for location de-txl
+- url: https://nfs.es-vit.ionos.com
+  description: service endpoint for location es-vit
+- url: https://nfs.fr-par.ionos.com
+  description: service endpoint for location fr-par
+- url: https://nfs.gb-lhr.ionos.com
+  description: service endpoint for location gb-lhr
+- url: https://nfs.us-ewr.ionos.com
+  description: service endpoint for location us-ewr
+- url: https://nfs.us-las.ionos.com
+  description: service endpoint for location us-las
+- url: https://nfs.us-mci.ionos.com
+  description: service endpoint for location us-mci
+tags:
+- name: Clusters
+  description: |
+    Network File Storage cluster
+    This tag groups all operations for clusters.
+- name: Shares
+  description: |
+    A share represents a directory on a Network File Storage cluster, where options like quotas can be set for the directory.
+    This tag groups all operations for shares.
+paths:
+  /clusters:
+    get:
+      operationId: clustersGet
+      summary: Retrieve all Clusters
+      security:
+      - tokenAuth: []
+      description: |
+        This endpoint enables retrieving all Clusters using
+        pagination and optional filters.
+      parameters:
+        - $ref: "#/components/parameters/paginationOffset"
+        - $ref: "#/components/parameters/paginationLimit"
+        - $ref: "#/components/parameters/datacenterId"
+      tags:
+        - Clusters
+      responses:
+        "200":
+          description: |
+            Returned all requested Clusters successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterReadList"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: clustersPost
+      summary: Create Cluster
+      security:
+      - tokenAuth: []
+      tags:
+        - Clusters
+      description: |
+        Creates a new Cluster.
+        
+        The full Cluster needs to be provided to create the object.
+        Optional data will be filled with defaults or left empty.
+      requestBody:
+        description: Cluster to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClusterCreate"
+      responses:
+        "201":
+          description: Cluster successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /clusters/{clusterId}:
+    get:
+      operationId: clustersFindById
+      summary: Retrieve Cluster
+      security:
+      - tokenAuth: []
+      tags:
+        - Clusters
+      description: Returns the Cluster by ID.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+      responses:
+        "200":
+          description: Getting Cluster was successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      operationId: clustersPut
+      summary: Ensure Cluster
+      security:
+      - tokenAuth: []
+      tags:
+        - Clusters
+      description: |
+        Ensures that the Cluster with the provided ID is created or modified.
+        The full Cluster needs to be provided to ensure
+        (either update or create) the Cluster. Non present data will
+        only be filled with defaults or left empty, but not take
+        previous values into consideration.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+      requestBody:
+        description: update Cluster
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClusterEnsure"
+      responses:
+        "200":
+          description: Cluster successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterRead"
+        "201":
+          description: Cluster successfully ensured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      operationId: clustersDelete
+      summary: Delete Cluster
+      security:
+      - tokenAuth: []
+      tags:
+        - Clusters
+      description: Deletes the specified Cluster.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+      responses:
+        "202":
+          description: Deleting Cluster was successful.
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/ConflictDependencies'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /clusters/{clusterId}/shares:
+    get:
+      operationId: clustersSharesGet
+      summary: Retrieve all Shares
+      security:
+      - tokenAuth: []
+      description: |
+        This endpoint enables retrieving all Shares using
+        pagination and optional filters.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+        - $ref: "#/components/parameters/paginationOffset"
+        - $ref: "#/components/parameters/paginationLimit"
+      tags:
+        - Shares
+      responses:
+        "200":
+          description: |
+            Returned all requested Shares successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareReadList"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: clustersSharesPost
+      summary: Create Share
+      security:
+      - tokenAuth: []
+      tags:
+        - Shares
+      description: |
+        Creates a new Share.
+        
+        The full Share needs to be provided to create the object.
+        Optional data will be filled with defaults or left empty.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+      requestBody:
+        description: Share to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareCreate"
+      responses:
+        "201":
+          description: Share successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /clusters/{clusterId}/shares/{shareId}:
+    get:
+      operationId: clustersSharesFindById
+      summary: Retrieve Share
+      security:
+      - tokenAuth: []
+      tags:
+        - Shares
+      description: Returns the Share by ID.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+        - name: shareId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "7b1ef56d-dfc6-51fe-aff0-7af2d6747868"
+          required: true
+          description: The ID (UUID) of the Share.
+      responses:
+        "200":
+          description: Getting Share was successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      operationId: clustersSharesPut
+      summary: Ensure Share
+      security:
+      - tokenAuth: []
+      tags:
+        - Shares
+      description: |
+        Ensures that the Share with the provided ID is created or modified.
+        The full Share needs to be provided to ensure
+        (either update or create) the Share. Non present data will
+        only be filled with defaults or left empty, but not take
+        previous values into consideration.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+        - name: shareId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "7b1ef56d-dfc6-51fe-aff0-7af2d6747868"
+          required: true
+          description: The ID (UUID) of the Share.
+      requestBody:
+        description: update Share
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareEnsure"
+      responses:
+        "200":
+          description: Share successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRead"
+        "201":
+          description: Share successfully ensured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRead"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      operationId: clustersSharesDelete
+      summary: Delete Share
+      security:
+      - tokenAuth: []
+      tags:
+        - Shares
+      description: Deletes the specified Share.
+      parameters:
+        - name: clusterId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+          required: true
+          description: The ID (UUID) of the Cluster.
+        - name: shareId
+          in: path
+          schema:
+            type: string
+            format: uuid
+          example: "7b1ef56d-dfc6-51fe-aff0-7af2d6747868"
+          required: true
+          description: The ID (UUID) of the Share.
+      responses:
+        "202":
+          description: Deleting Share was successful.
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/NotAllowed'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+        "500":
+          $ref: '#/components/responses/InternalError'
+        "503":
+          $ref: '#/components/responses/ServiceUnavailable'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+components:
+  parameters:
+    paginationOffset:
+      name: offset
+      in: query
+      description: The first element (of the total list of elements) to include in the response. Use this parameter together with the limit for pagination.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 0
+        minimum: 0
+      example: 0
+    paginationLimit:
+      name: limit
+      in: query
+      description: The maximum number of elements to return. Use this parameter together with the offset for pagination.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 100
+        minimum: 1
+        maximum: 1000
+      example: 100
+    datacenterId:
+      name: "filter.datacenterId"
+      in: query
+      description: The datacenter ID to filter by.
+      required: false
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    ClusterReadList:
+      allOf:
+      - type: object
+        required:
+        - id
+        - type
+        - href
+        properties:
+          id:
+            description: ID of the list of Cluster resources.
+            type: string
+            format: uuid
+            example: ed17eb1f-ac43-5670-9e63-8be33c475449
+          type:
+            description: The type of the resource.
+            type: string
+            enum:
+            - collection
+          href:
+            description: The URL of the list of Cluster resources.
+            type: string
+            example: /clusters
+          items:
+            description: The list of Cluster resources.
+            type: array
+            items:
+              $ref: '#/components/schemas/ClusterRead'
+      - $ref: '#/components/schemas/Pagination'
+    ClusterRead:
+      type: object
+      required:
+      - id
+      - type
+      - href
+      - metadata
+      - properties
+      properties:
+        id:
+          type: string
+          description: The ID (UUID) of the Cluster.
+          format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+        type:
+          description: The type of the resource.
+          type: string
+          enum:
+          - cluster
+        href:
+          description: The URL of the Cluster.
+          type: string
+          example: /clusters/e69b22a5-8fee-56b1-b6fb-4a07e4205ead
+        metadata:
+          $ref: '#/components/schemas/MetadataWithUsage'
+        properties:
+          $ref: '#/components/schemas/Cluster'
+    ClusterEnsure:
+      type: object
+      required:
+      - id
+      - properties
+      properties:
+        id:
+          type: string
+          description: The ID (UUID) of the Cluster.
+          format: uuid
+          example: "e69b22a5-8fee-56b1-b6fb-4a07e4205ead"
+        metadata:
+          description: Metadata
+          additionalProperties: true
+          example: {}
+        properties:
+          $ref: '#/components/schemas/Cluster'
+    ClusterCreate:
+      type: object
+      required:
+      - properties
+      properties:
+        metadata:
+          description: Metadata
+          additionalProperties: true
+          example: {}
+        properties:
+          $ref: '#/components/schemas/Cluster'
+    ShareReadList:
+      allOf:
+      - type: object
+        required:
+        - id
+        - type
+        - href
+        properties:
+          id:
+            description: ID of the list of Share resources.
+            type: string
+            format: uuid
+            example: ce834630-97f2-56a7-bc99-4427e61d4714
+          type:
+            description: The type of the resource.
+            type: string
+            enum:
+            - collection
+          href:
+            description: The URL of the list of Share resources.
+            type: string
+            example: /clusters/{clusterId}/shares
+          items:
+            description: The list of Share resources.
+            type: array
+            items:
+              $ref: '#/components/schemas/ShareRead'
+      - $ref: '#/components/schemas/Pagination'
+    ShareRead:
+      type: object
+      required:
+      - id
+      - type
+      - href
+      - metadata
+      - properties
+      properties:
+        id:
+          type: string
+          description: The ID (UUID) of the Share.
+          format: uuid
+          example: "7b1ef56d-dfc6-51fe-aff0-7af2d6747868"
+        type:
+          description: The type of the resource.
+          type: string
+          enum:
+          - share
+        href:
+          description: The URL of the Share.
+          type: string
+          example: /clusters/{clusterId}/shares/7b1ef56d-dfc6-51fe-aff0-7af2d6747868
+        metadata:
+          $ref: '#/components/schemas/MetadataWithPath'
+        properties:
+          $ref: '#/components/schemas/Share'
+    ShareEnsure:
+      type: object
+      required:
+      - id
+      - properties
+      properties:
+        id:
+          type: string
+          description: The ID (UUID) of the Share.
+          format: uuid
+          example: "7b1ef56d-dfc6-51fe-aff0-7af2d6747868"
+        metadata:
+          description: Metadata
+          additionalProperties: true
+          example: {}
+        properties:
+          $ref: '#/components/schemas/Share'
+    ShareCreate:
+      type: object
+      required:
+      - properties
+      properties:
+        metadata:
+          description: Metadata
+          additionalProperties: true
+          example: {}
+        properties:
+          $ref: '#/components/schemas/Share'
+    Cluster:
+      type: object
+      description: |
+        Network File Storage cluster
+      required:
+        - name
+        - connections
+      properties:
+        name:
+          type: string
+          description: Name of the cluster
+          example: "Cluster 1"
+        connections:
+          type: array
+          items:
+            type: object
+            required:
+            - datacenterId
+            - ipAddress
+            - lan
+            properties:
+              datacenterId:
+                type: string
+                format: uuid
+                example: "123e4567-e89b-12d3-a456-426614174001"
+                description: |
+                  The ID of the datacenter where the Network File Storage cluster is located.
+              lan:
+                type: string
+                description: |
+                  The LAN to which the Network File Storage cluster must be connected.
+                example: "1"
+              ipAddress:
+                type: string
+                description: |
+                  The IP address and prefix of the Network File Storage cluster. Must be specified in CIDR notation. Both IPv4 and IPv6 addresses are supported.
+                example: "10.254.64.1/24"
+          minItems: 1
+          maxItems: 1
+        nfs:
+          type: object
+          properties:
+            minVersion:
+              type: string
+              description: |
+                The minimum version of the NFS protocol.
+                * `4.2` - NFSv4.2
+              default: "4.2"
+              x-extensible-enum:
+              - "4.2"
+        size:
+          type: integer
+          description: |
+            The size of the Network File Storage cluster in TiB or GiB. Note that the cluster size cannot be reduced after provisioning.
+            This value determines the billing fees.
+            - When `sizeUnit` is `TiB`, the allowed values are between 2 and 42.
+            - When `sizeUnit` is `GiB`, the allowed values are between 2048 and 43008.
+          default: 2
+          example: 5
+        sizeUnit:
+          type: string
+          description: The type of the size for the Network File Storage cluster which can be TiB or GiB.
+          example: TiB
+          default: TiB
+          x-extensible-enum:
+            - TiB
+            - GiB
+    Share:
+      type: object
+      description: |
+        A share represents a directory on a Network File Storage cluster, where options like quotas can be set for the directory.
+      required:
+      - name
+      - clientGroups
+      properties:
+        name:
+          type: string
+          description: Name of the share
+          example: "Share 1"
+        quota:
+          type: integer
+          description: |
+            The quota for the export in MiB, which can limit the amount of data stored. Setting the quota to 0 will disable it.
+          default: 0
+          minimum: 0
+        gid:
+          type: integer
+          description: |
+            The group ID that will own the exported directory and be used as the `anongid` NFS option in squash modes `root-anonymous` and `all-anonymous`.
+          default: 65534
+          maximum: 65534
+        uid:
+          type: integer
+          description: |
+            The user ID that will own the exported directory and be used as the `anonuid` NFS option in squash modes `root-anonymous` and `all-anonymous`.
+          default: 65534
+          maximum: 65534
+        clientGroups:
+          type: array
+          minItems: 1
+          description: |
+            Client groups are the virtual machines connecting to the Network File Storage cluster.
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+                description: |
+                  Optional description for the client group.
+              ipNetworks:
+                type: array
+                items:
+                  type: string
+                  description: |
+                    The allowed host or network to which the export is being shared.
+                    The IP address can be either IPv4 or IPv6 and has to be given with CIDR notation.
+                    This setting will always supersede the list of hosts.
+                    Only use this field if you want the share access on the entire network. In case you need to grant access to specific hosts, leave this field blank.
+              hosts:
+                type: array
+                items:
+                  type: string
+                  description: |
+                    A single host allowed to connect to the share. The host can be specified using an IP address,
+                    which can be either IPv4 or IPv6.
+              nfs:
+                type: object
+                description: |
+                  NFS specific configurations.
+                properties:
+                  squash:
+                    type: string
+                    description: |
+                      The NFS squash mode for the export can be set to:
+                      * `none` - No squash mode, no mapping. The share directory will be owned by the given UID/GID. (`no_all_squash,no_root_squash`)
+                      * `root-anonymous` - Map root user to the anonymous UID/GID. The share directory will be owned by the given UID/GID. (`root_squash,anonuid=<uid>,anongid=<gid>`)
+                      * `all-anonymous` - Map all users an internal anonymous UID/GID. The given UID/GID will be ignored. (`all_squash,anonuid=<uid>,anongid=<gid>`)
+                    enum:
+                    - none
+                    - root-anonymous
+                    - all-anonymous
+                    default: none
+      example:
+        name: example-export
+        quota: 512
+        clientGroups:
+        - ipNetworks:
+          - 10.234.50.0/24
+          hosts:
+          - "10.234.62.123"
+          nfs:
+            squash: all-anonymous
+    MetadataWithStatus:
+      allOf:
+        - $ref: '#/components/schemas/Metadata'
+        - type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              description: |
+                The status of the resource can be one of the following:
+                * `AVAILABLE` - The resource exists and is healthy.
+                * `PROVISIONING` - The resource is being created or updated.
+                * `DESTROYING` - A delete command was issued, and the resource is being deleted.
+                * `FAILED` - The resource failed, with details provided in `statusMessage`.
+              enum:
+                - PROVISIONING
+                - DESTROYING
+                - AVAILABLE
+                - FAILED
+              example: "AVAILABLE"
+              readOnly: true
+            statusMessage:
+              type: string
+              description: |
+                The error message when the status is `FAILED`.
+              example: null
+              readOnly: true
+    MetadataWithUsage:
+      allOf:
+        - $ref: '#/components/schemas/MetadataWithStatus'
+        - type: object
+          required:
+          - used
+          properties:
+            used:
+              type: integer
+              format: int64
+              description: |
+                The storage capacity currently taken up by the customer's files in bytes, or 0 on error.
+              example: 134217728
+              readOnly: true
+    MetadataWithPath:
+      allOf:
+        - $ref: '#/components/schemas/MetadataWithStatus'
+        - type: object
+          required:
+          - nfsPath
+          properties:
+            nfsPath:
+              type: string
+              description: |
+                The path of the NFS export (currently equal to the UUID of the share).
+                On a machine with access to the share, mount it using the following command: `mount -t nfs <cluster-ip>:<nfs-path> <target-dir>`
+              example: "/123e4567-e89b-12d3-a456-426614174222"
+              readOnly: true
+    Error:
+      description: |
+        The Error object is used to represent an error response from the API.
+      type: object
+      properties:
+        httpStatus:
+          type: integer
+          description: The HTTP status code of the operation.
+          example: 400
+        messages:
+          type: array
+          description: |
+            A list of error messages.
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: |
+                  Application internal error code
+                example: "err-1234"
+              message:
+                type: string
+                description: |
+                  A human readable explanation specific to this occurrence of the
+                  problem.
+                example: "Error message example"
+    Metadata:
+      type: object
+      description: Metadata of the resource.
+      properties:
+        createdDate:
+          type: string
+          format: date-time
+          description: The ISO 8601 creation timestamp.
+          example: "2020-12-10T13:37:50+01:00"
+          readOnly: true
+        createdBy:
+          type: string
+          description: Unique name of the identity that created the resource.
+          example: "ionos:identity:::users/87f9a82e-b28d-49ed-9d04-fba2c0459cd3"
+          readOnly: true
+        createdByUserId:
+          type: string
+          description: Unique id of the identity that created the resource.
+          example: 87f9a82e-b28d-49ed-9d04-fba2c0459cd3
+          readOnly: true
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: The ISO 8601 modified timestamp.
+          example: "2020-12-11T13:37:50+01:00"
+          readOnly: true
+        lastModifiedBy:
+          type: string
+          description: Unique name of the identity that last modified the resource.
+          example: "ionos:identity:::users/87f9a82e-b28d-49ed-9d04-fba2c0459cd3"
+          readOnly: true
+        lastModifiedByUserId:
+          type: string
+          description: Unique id of the identity that last modified the resource.
+          example: 87f9a82e-b28d-49ed-9d04-fba2c0459cd3
+          readOnly: true
+        resourceURN:
+          type: string
+          description: Unique name of the resource.
+          example: "ionos:<product>:<location>:<contract>:<resource-path>"
+          readOnly: true
+    Pagination:
+      required:
+      - offset
+      - limit
+      - _links
+      description: |
+        Pagination information. The offset and limit parameters are used to
+        navigate the list of elements. The _links object contains URLs to
+        navigate the different pages.
+      type: object
+      properties:
+        offset:
+          $ref: '#/components/schemas/Offset'
+        limit:
+          $ref: '#/components/schemas/Limit'
+        _links:
+          $ref: '#/components/schemas/Links'
+    Offset:
+      description: |
+        The offset specified in the request (if none was specified, the default
+        offset is 0).
+      type: integer
+      example: 0
+      minimum: 0
+      readOnly: true
+    Limit:
+      description: |
+        The limit specified in the request (if none was specified, use the
+        endpoint's default pagination limit).
+      type: integer
+      example: 42
+      minimum: 0
+      readOnly: true
+    Links:
+      description: |
+        URLs to navigate the different pages. As of now we always only return a
+        single page.
+      type: object
+      properties:
+        prev:
+          description: |
+            URL (with offset and limit parameters) of the previous page; only
+            present if offset is greater than 0.
+          type: string
+          format: uri
+          example: http://PREVIOUS-PAGE-URI
+          readOnly: true
+        self:
+          description: |
+            URL (with offset and limit parameters) of the current page.
+          type: string
+          format: uri
+          example: http://THIS-PAGE-URI
+          readOnly: true
+        next:
+          description: |
+            URL (with offset and limit parameters) of the next page; only
+            present if offset + limit is less than the total number of elements.
+          type: string
+          format: uri
+          example: http://NEXT-PAGE-URI
+          readOnly: true
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        The token can be generated using the 
+        [Authentication API](https://api.ionos.com/docs/authentication/v1/#tag/tokens/operation/tokensGenerate).
+  responses:
+    BadRequest:
+      description: |
+        ### Bad Request
+        The request send to the API was malformed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: |
+        ### Unauthorized
+        The request is missing authorization information or the authorization information provided are expired.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotAllowed:
+      description: |
+        ### Not Allowed
+        The user issuing the request does not have the needed permissions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: |
+        ### Conflict
+        The UUID is already taken by another party, follow the guides to generate UUIDs uniquely.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ConflictDependencies:
+      description: |
+        ### ConflictDependencies
+        The resource has dependencies and cannot be deleted. Follow the guidelines to delete the dependencies first.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: |
+        ### Not Found
+        The resource that was requested could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnexpectedError:
+      description: |
+        ### Unexpected Internal Server Error
+        An unexpected internal error occurred. We apologize for the inconvenience!
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: |
+        ### Unprocessable Entity
+        The request was well-formed but was unable to be followed due to semantic errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: |
+        ### Too Many Requests
+        The user has sent too many requests in a given amount of time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: |
+        ### Unsupported Media Type
+        The request has an unsupported media type.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: |
+        ### Internal Server Error
+        An internal error occurred. We apologize for the inconvenience!
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: |
+        ### Service Unavailable
+        The server is currently unable to handle the request due to a temporary overloading or maintenance of the server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,1139 @@
+openapi: "3.0.3"
+info:
+  title: Reference Fixture
+  version: "1.0.0"
+  description: >
+    Comprehensive reference fixture covering every capability documented in
+    COMPATIBILITY.md. Use this as the primary fixture for generator tests.
+  contact:
+    name: OpenAPI Crystal Generator
+    url: https://github.com/threez/openapi.cr
+  license:
+    name: MIT
+
+tags:
+  - name: resources
+    description: Resource CRUD operations
+  - name: search
+    description: Search and filtering
+  - name: uploads
+    description: File upload operations
+  - name: events
+    description: Event types (composition showcase)
+
+components:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Schemas
+  # ─────────────────────────────────────────────────────────────────────────────
+  schemas:
+
+    # ── Scalar aliases ──────────────────────────────────────────────────────────
+
+    ResourceId:
+      title: Resource ID
+      description: Unique identifier for a resource (uuid → UUID)
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    StringValue:
+      title: String Value
+      description: A constrained string scalar (minLength/maxLength)
+      type: string
+      minLength: 1
+      maxLength: 4096
+
+    IntValue:
+      title: Integer Value
+      description: A non-negative 64-bit integer scalar (format int64, minimum)
+      type: integer
+      format: int64
+      minimum: 0
+
+    BoolValue:
+      title: Boolean Value
+      description: A plain boolean scalar
+      type: boolean
+
+    # ── Enum ────────────────────────────────────────────────────────────────────
+
+    ResourceStatus:
+      title: Resource Status
+      description: Lifecycle status of a resource
+      type: string
+      deprecated: true
+      enum:
+        - active
+        - inactive
+        - pending
+        - archived
+      x-enumDescriptions:
+        - Resource is active and available
+        - Resource has been deactivated
+        - Resource is pending approval
+        - Resource has been archived
+
+    # ── Extensible enum ─────────────────────────────────────────────────────────
+
+    Priority:
+      title: Priority Level
+      description: Priority level, open for future values
+      type: string
+      x-extensible-enum:
+        - low
+        - medium
+        - high
+        - critical
+
+    # ── Struct — small / flat / all-required ────────────────────────────────────
+
+    Coordinates:
+      title: Geographic Coordinates
+      description: A latitude/longitude pair (struct; numeric constraints; xml object)
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          format: double
+          minimum: -90.0
+          maximum: 90.0
+          description: Latitude in decimal degrees
+        lng:
+          type: number
+          format: double
+          minimum: -180.0
+          maximum: 180.0
+          description: Longitude in decimal degrees
+      xml:
+        name: Coordinates
+
+    # ── Struct — readOnly / writeOnly / nullable ────────────────────────────────
+
+    Metadata:
+      title: Resource Metadata
+      description: Audit metadata (struct; readOnly/writeOnly; nullable; date-time format)
+      type: object
+      nullable: true
+      x-nullable: true
+      required: [created_at, updated_at, secret_token]
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Last-modified timestamp
+        secret_token:
+          type: string
+          writeOnly: true
+          description: Internal secret, stripped from responses
+
+    # ── Hash alias (additionalProperties + x-additionalPropertiesName) ──────────
+
+    AttributeMap:
+      title: Attribute Map
+      description: Arbitrary string key-value pairs
+      type: object
+      additionalProperties:
+        type: string
+      x-additionalPropertiesName: attributes
+
+    # ── Base class for allOf inheritance ────────────────────────────────────────
+
+    BaseEvent:
+      title: Base Event
+      description: Common fields for all event types (parent class for allOf inheritance)
+      type: object
+      required: [event_type, occurred_at, source_id]
+      properties:
+        event_type:
+          type: string
+          description: Discriminator field
+        occurred_at:
+          type: string
+          format: date-time
+          description: When the event occurred
+        source_id:
+          $ref: '#/components/schemas/ResourceId'
+        correlation_id:
+          type: string
+          format: uuid
+          description: Optional tracing correlation ID
+        tags:
+          type: array
+          items:
+            type: string
+          minItems: 0
+          maxItems: 20
+          uniqueItems: true
+          description: Categorisation tags
+        severity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          multipleOf: 1
+          description: Severity level 1–10
+
+    # ── allOf single $ref + inline → subclass (Class) ───────────────────────────
+
+    CreatedEvent:
+      title: Created Event
+      description: Fired when a resource is created (allOf single-parent inheritance; uri format)
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          required: [resource_uri]
+          properties:
+            resource_uri:
+              type: string
+              format: uri
+              description: URI of the created resource
+            initial_status:
+              $ref: '#/components/schemas/ResourceStatus'
+
+    UpdatedEvent:
+      title: Updated Event
+      description: Fired when a resource is updated (allOf single-parent inheritance; int32 constraint)
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          required: [change_count]
+          properties:
+            change_count:
+              type: integer
+              format: int32
+              minimum: 1
+              exclusiveMinimum: false
+              description: Number of changed fields
+            previous_status:
+              $ref: '#/components/schemas/ResourceStatus'
+            new_status:
+              $ref: '#/components/schemas/ResourceStatus'
+
+    # ── AbstractClass — oneOf + explicit discriminator ──────────────────────────
+
+    Event:
+      title: Event
+      description: Discriminated union of all event types (AbstractClass; use_json_discriminator)
+      oneOf:
+        - $ref: '#/components/schemas/CreatedEvent'
+        - $ref: '#/components/schemas/UpdatedEvent'
+      discriminator:
+        propertyName: event_type
+        mapping:
+          resource.created: '#/components/schemas/CreatedEvent'
+          resource.updated: '#/components/schemas/UpdatedEvent'
+
+    # ── UnionAlias — anyOf all-$ref, no discriminator ───────────────────────────
+
+    ScalarValue:
+      title: Scalar Value
+      description: Any one of the scalar types (UnionAlias; try-each deserialization)
+      anyOf:
+        - $ref: '#/components/schemas/StringValue'
+        - $ref: '#/components/schemas/IntValue'
+        - $ref: '#/components/schemas/BoolValue'
+
+    # ── Error classes ────────────────────────────────────────────────────────────
+
+    ApiError:
+      title: API Error
+      description: Standard machine-readable error response
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Human-readable error message
+        request_id:
+          type: string
+          format: uuid
+          description: ID of the request that triggered the error
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error context
+
+    ValidationError:
+      title: Validation Error
+      description: Error raised when request validation fails (allOf subclass of ApiError)
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            field:
+              type: string
+              description: Field that failed validation
+            violations:
+              type: array
+              items:
+                type: string
+              description: Specific violation messages
+
+    # ── Main resource class — comprehensive field coverage ──────────────────────
+
+    Resource:
+      title: Resource
+      description: Primary entity exercising all scalar formats, constraints, and OAS modifiers
+      type: object
+      required: [id, name, status, created_at]
+      minProperties: 4
+      maxProperties: 20
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourceId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: '^[a-zA-Z0-9_\-\.]+$'
+          description: Resource name
+        status:
+          $ref: '#/components/schemas/ResourceStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        attributes:
+          $ref: '#/components/schemas/AttributeMap'
+        score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          exclusiveMaximum: true
+          description: Quality score (float32; exclusive upper bound)
+        byte_size:
+          type: integer
+          format: uint64
+          description: Size in bytes (uint64)
+        published_on:
+          type: string
+          format: date
+          readOnly: true
+          description: Publication date (date format; readOnly)
+        checksum:
+          type: string
+          format: byte
+          description: Base64-encoded checksum (byte format)
+        legacy_ref:
+          type: string
+          deprecated: true
+          description: Deprecated field kept for backwards compatibility
+
+    # ── ArrayAlias ──────────────────────────────────────────────────────────────
+
+    ResourceList:
+      title: Resource List
+      description: Paginated array of resources (ArrayAlias; minItems/maxItems/uniqueItems)
+      type: array
+      items:
+        $ref: '#/components/schemas/Resource'
+      minItems: 0
+      maxItems: 500
+      uniqueItems: true
+
+    # ── ComposeAlias — allOf with 2+ $refs, no inline additions ────────────────
+
+    AnnotatedResource:
+      title: Annotated Resource
+      description: Resource with audit metadata as a delegate-based compound type (ComposeAlias)
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - $ref: '#/components/schemas/Metadata'
+
+    # ── AnyAlias — oneOf mixed inline + $ref → JSON::Any ───────────────────────
+
+    FlexPayload:
+      title: Flexible Payload
+      description: Resource or arbitrary inline object — mixed oneOf falls back to JSON::Any (AnyAlias)
+      oneOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          description: Arbitrary inline fallback object
+          properties:
+            raw:
+              type: string
+
+    # ── not keyword (documented as untranslatable in Crystal) ──────────────────
+
+    NotCreatedEvent:
+      title: Not Created Event
+      description: Anything that is not a CreatedEvent — untranslatable in Crystal's type system
+      not:
+        $ref: '#/components/schemas/CreatedEvent'
+
+    # ── ScalarAlias — single-ref oneOf collapses to type alias ─────────────────
+
+    SingleResource:
+      title: Single Resource Alias
+      description: Single-ref oneOf collapses to a type alias (ScalarAlias)
+      oneOf:
+        - $ref: '#/components/schemas/Resource'
+
+    # ── ScalarAlias — single-ref allOf with no extra props ─────────────────────
+
+    AliasedResource:
+      title: Aliased Resource
+      description: Single-ref allOf with no additions collapses to a type alias (ScalarAlias)
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+
+    # ── UnionAlias — oneOf all-refs, no discriminator ──────────────────────────
+
+    ResourceOrEvent:
+      title: Resource Or Event
+      description: oneOf all-$ref without discriminator becomes a UnionAlias wrapper struct
+      oneOf:
+        - $ref: '#/components/schemas/Resource'
+        - $ref: '#/components/schemas/BaseEvent'
+
+    # ── AbstractClass — oneOf with implicit discriminator (no mapping) ──────────
+
+    ImplicitEvent:
+      title: Implicit Event
+      description: oneOf with discriminator but no explicit mapping uses schema names as wire values
+      oneOf:
+        - $ref: '#/components/schemas/CreatedEvent'
+        - $ref: '#/components/schemas/UpdatedEvent'
+      discriminator:
+        propertyName: event_type
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Parameters
+  # ─────────────────────────────────────────────────────────────────────────────
+  parameters:
+
+    ResourceIdParam:
+      name: id
+      in: path
+      required: true
+      description: UUID of the resource (path; uuid format)
+      schema:
+        type: string
+        format: uuid
+
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: Maximum results to return
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 500
+        default: 20
+
+    OffsetParam:
+      name: offset
+      in: query
+      required: false
+      description: Results to skip for pagination
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      description: Sort direction (inline enum → auto-named from param name)
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+
+    # Array query params — all four supported styles
+    TagsParam:
+      name: tags
+      in: query
+      required: false
+      description: Filter by tags (style=form explode=true — multi-key)
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+
+    ColorsParam:
+      name: colors
+      in: query
+      required: false
+      description: Filter by colors (style=form explode=false — CSV)
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+
+    IdsParam:
+      name: ids
+      in: query
+      required: false
+      description: Filter by UUIDs (style=spaceDelimited explode=false)
+      style: spaceDelimited
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+    CodesParam:
+      name: codes
+      in: query
+      required: false
+      description: Filter by codes (style=pipeDelimited explode=false)
+      style: pipeDelimited
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+
+    # Header params
+    XApiKeyParam:
+      name: X-Api-Key
+      in: header
+      required: true
+      description: API authentication key (required header)
+      schema:
+        type: string
+
+    XContractNumberParam:
+      name: X-Contract-Number
+      in: header
+      required: false
+      description: Optional enterprise contract number (int32 header)
+      schema:
+        type: integer
+        format: int32
+
+    XDeprecatedHeader:
+      name: X-Legacy-Token
+      in: header
+      required: false
+      deprecated: true
+      description: Deprecated auth header; use X-Api-Key instead
+      schema:
+        type: string
+
+    XTenantParam:
+      name: X-Tenant
+      in: header
+      required: false
+      description: Tenant identifier (path-item-level parameter)
+      schema:
+        type: string
+
+    # Cookie param
+    SessionCookieParam:
+      name: session_id
+      in: cookie
+      required: false
+      description: Session identifier (cookie param)
+      schema:
+        type: string
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Responses
+  # ─────────────────────────────────────────────────────────────────────────────
+  responses:
+
+    ResourceListResponse:
+      description: Successful list of resources with pagination headers
+      headers:
+        X-Total-Count:
+          description: Total resources matching the query
+          schema:
+            type: integer
+            format: int32
+        X-Next-Page:
+          description: Cursor token for the next page
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceList'
+        application/yaml:
+          schema:
+            $ref: '#/components/schemas/ResourceList'
+
+    ResourceResponse:
+      description: A single resource (JSON + XML; response header)
+      headers:
+        X-Request-Id:
+          description: Unique request identifier
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Resource'
+
+    CreatedResponse:
+      description: Resource created successfully (Location header)
+      headers:
+        Location:
+          description: URI of the newly created resource
+          schema:
+            type: string
+            format: uri
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+
+    NoContentResponse:
+      description: Operation succeeded with no response body
+
+    BadRequestResponse:
+      description: Malformed or invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    ForbiddenResponse:
+      description: Caller is not authorized for this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    NotFoundResponse:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    UnprocessableResponse:
+      description: Request body failed schema validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    ServerErrorResponse:
+      description: Unexpected server-side error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    DefaultErrorResponse:
+      description: Unexpected error (catch-all default)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Request Bodies
+  # ─────────────────────────────────────────────────────────────────────────────
+  requestBodies:
+
+    ResourceBody:
+      description: Resource payload supporting all four structured content types
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/yaml:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: '#/components/schemas/Resource'
+
+    MultipartBody:
+      description: Multipart upload with binary file and byte thumbnail
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file, name]
+            properties:
+              file:
+                type: string
+                format: binary
+                description: File content (binary → IO::Memory)
+              thumbnail:
+                type: string
+                format: byte
+                description: Base64-encoded thumbnail (byte → Bytes)
+              name:
+                type: string
+                minLength: 1
+                maxLength: 255
+                description: Display name for the uploaded file
+              metadata:
+                $ref: '#/components/schemas/Metadata'
+
+# ───────────────────────────────────────────────────────────────────────────────
+# Paths
+# ───────────────────────────────────────────────────────────────────────────────
+paths:
+
+  /resources:
+    get:
+      operationId: listResources
+      summary: List resources
+      description: >
+        Paginated list with header + cookie params, response headers (named-tuple
+        return), JSON + YAML response, and inline enum param (SortParam).
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/TagsParam'
+        - $ref: '#/components/parameters/XApiKeyParam'
+        - $ref: '#/components/parameters/XContractNumberParam'
+        - $ref: '#/components/parameters/SessionCookieParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/ServerErrorResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+    post:
+      operationId: createResource
+      summary: Create a resource
+      description: >
+        Inline request body schema auto-named from operationId. Exercises
+        string constraints (minLength/maxLength/pattern) and 422 response.
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, status]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  pattern: '^[a-zA-Z0-9_\-\.]+$'
+                status:
+                  $ref: '#/components/schemas/ResourceStatus'
+                priority:
+                  $ref: '#/components/schemas/Priority'
+                coordinates:
+                  $ref: '#/components/schemas/Coordinates'
+          application/yaml:
+            schema:
+              type: object
+              required: [name, status]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                status:
+                  $ref: '#/components/schemas/ResourceStatus'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponse'
+        '500':
+          $ref: '#/components/responses/ServerErrorResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /resources/{id}:
+    # Path-item-level parameters: inherited by all operations below.
+    # DELETE overrides X-Tenant to make it required (operation param wins).
+    parameters:
+      - $ref: '#/components/parameters/ResourceIdParam'
+      - $ref: '#/components/parameters/XTenantParam'
+
+    get:
+      operationId: getResource
+      summary: Get a resource
+      description: >
+        Inherits ResourceIdParam and XTenantParam from path item.
+        JSON + XML response; uuid path param.
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ServerErrorResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+    put:
+      operationId: updateResource
+      summary: Replace a resource
+      description: >
+        Exercises ResourceBody with all four structured content types
+        (JSON + YAML + XML + form-urlencoded).
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ResourceBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponse'
+        '500':
+          $ref: '#/components/responses/ServerErrorResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+    patch:
+      operationId: patchResource
+      summary: Partially update a resource
+      description: Deprecated operation with a deprecated header parameter.
+      deprecated: true
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+        - $ref: '#/components/parameters/XDeprecatedHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+    delete:
+      operationId: deleteResource
+      summary: Delete a resource
+      description: >
+        Overrides path-item XTenantParam: makes it required with a minLength
+        constraint. Exercises operation-level parameter override rule.
+        Returns 204 No Content.
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+        - name: X-Tenant
+          in: header
+          required: true
+          description: Tenant is required for destructive operations (overrides path-item default)
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContentResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /search:
+    get:
+      operationId: searchResources
+      summary: Search resources
+      description: >
+        Exercises all four array query parameter serialisation styles:
+        form+explode=true (TagsParam), form+explode=false / CSV (ColorsParam),
+        spaceDelimited (IdsParam), pipeDelimited (CodesParam).
+      tags: [resources, search]
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Full-text search query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/TagsParam'
+        - $ref: '#/components/parameters/ColorsParam'
+        - $ref: '#/components/parameters/IdsParam'
+        - $ref: '#/components/parameters/CodesParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/XApiKeyParam'
+        - $ref: '#/components/parameters/SessionCookieParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /upload:
+    post:
+      operationId: uploadResource
+      summary: Upload a resource file
+      description: >
+        Multipart/form-data request with binary (file → IO::Memory) and
+        byte (thumbnail → Bytes) fields.
+      tags: [uploads]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      requestBody:
+        $ref: '#/components/requestBodies/MultipartBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /multi-content:
+    post:
+      operationId: submitMultiContent
+      summary: Submit content in any format
+      description: >
+        Single operation accepting all five content types: application/json,
+        application/yaml, application/xml, application/x-www-form-urlencoded,
+        and multipart/form-data. Tests content_type/accept parameter generation.
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Resource'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Resource'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Resource'
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resource:
+                  $ref: '#/components/schemas/Resource'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      description: >
+        Exercises wildcard response ranges: specific 400/403/500 alongside
+        4XX and 5XX wildcard ranges, plus a default catch-all.
+      tags: [resources]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/XApiKeyParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/ServerErrorResponse'
+        4XX:
+          description: Client error (wildcard range)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        5XX:
+          description: Server error (wildcard range)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      summary: Get a single item
+      description: >
+        int32 path parameter (not uuid). Response headers → named-tuple return.
+        Exercises XContractNumberParam (optional int32 header) and SessionCookieParam.
+      tags: [resources]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Integer item identifier (int32 path param)
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - $ref: '#/components/parameters/XApiKeyParam'
+        - $ref: '#/components/parameters/XContractNumberParam'
+        - $ref: '#/components/parameters/SessionCookieParam'
+      responses:
+        '200':
+          description: The requested item with rate-limit headers
+          headers:
+            X-Request-Id:
+              description: Unique request identifier
+              schema:
+                type: string
+                format: uuid
+            X-Rate-Limit:
+              description: Remaining rate-limit calls this window
+              schema:
+                type: integer
+                format: int32
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /aliases:
+    get:
+      operationId: getAliases
+      summary: Composition kind showcase
+      description: >
+        Inline response body (auto-named from operationId) referencing all
+        composition schema kinds: UnionAlias, AnyAlias, AbstractClass,
+        ComposeAlias, and the not keyword.
+      tags: [events]
+      parameters:
+        - $ref: '#/components/parameters/XApiKeyParam'
+      responses:
+        '200':
+          description: All composition kinds in a single response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  union_alias:
+                    $ref: '#/components/schemas/ScalarValue'
+                  any_alias:
+                    $ref: '#/components/schemas/FlexPayload'
+                  abstract_class:
+                    $ref: '#/components/schemas/Event'
+                  compose_alias:
+                    $ref: '#/components/schemas/AnnotatedResource'
+                  not_example:
+                    $ref: '#/components/schemas/NotCreatedEvent'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  /events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: >
+        Returns an array of discriminated Event types. Exercises AbstractClass
+        in a list response context.
+      tags: [events]
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/XApiKeyParam'
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        default:
+          $ref: '#/components/responses/DefaultErrorResponse'
+
+  # Path-item $ref — mirrors /resources, exercises path item reference resolution
+  /mirror:
+    $ref: '#/paths/~1resources'

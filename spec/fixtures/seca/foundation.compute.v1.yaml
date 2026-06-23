@@ -1,0 +1,1708 @@
+openapi: 3.0.3
+info:
+  title: Compute
+  version: v1
+  description: |
+    The Compute Foundation API provides access to compute resources 
+    including virtual machines and instance management.
+    This API is part of the Sovereign European Cloud API.
+servers:
+  - url: https://demo.secapi.cloud/providers/seca.compute
+    description: Path Schema
+  - url: https://compute.seca.demo.secapi.cloud
+    description: DNS Schema
+security:
+  - bearerAuth: []
+tags:
+  - name: Sku
+    description: Sku management
+  - name: Instance
+    description: Instance management
+paths:
+  /v1/tenants/{tenant}/skus:
+    get:
+      tags:
+        - Sku
+      security:
+        - bearerAuth: []
+      summary: List skus
+      description: |
+        Retrieves a list of available SKU (Stock Keeping Unit) configurations for compute instances.
+
+        ## Available SECA SKUs with their capabilities.
+        Seca-Resources don"t have mandatory parameters and extensions.
+        (Provider may have more SKUs available.)
+
+        | Tier | vCPU | RAM | Architecture | benchmarkPoints |
+        |-|-|-|-|-|
+        | D2XS | 1 | 1 | amd64 | min 500 |
+        | DXS | 1 | 2 | amd64 | min 750 |
+        | DS | 2 | 4 | amd64 | min 2200 |
+        | DM | 4 | 8 | amd64 | min 3500 |
+        | DL | 8 | 16 | amd64 | min 6000 |
+        | DXL | 16 | 32 | amd64 | min 9000 |
+        | D2XL | 32 | 64 | amd64 | min 13000 |
+        | S2XS | 1 | 1 | amd64 | min 500 |
+        | SXS | 1 | 2 | amd64 | min 700 |
+        | SS | 2 | 4 | amd64 | min 2000 |
+        | SM | 4 | 8 | amd64 | min 3000 |
+        | SL | 8 | 16 | amd64 | min 5500 |
+        | SXL | 16 | 32 | amd64 | min 8000 |
+        | S2XL | 32 | 64 | amd64 | min 9000 |
+      operationId: listSkus
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/labelSelector'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/skipTokenParam'
+        - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkuIterator'
+              example:
+                items:
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: D2XS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.d2xs
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.d2xs
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.d2xs
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 1
+                      vCPU: 1
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: DXS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.dxs
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.dxs
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.dxs
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 2
+                      vCPU: 1
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: DS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.ds
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.ds
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.ds
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 4
+                      vCPU: 2
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: DM
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.dm
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.dm
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.dm
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 8
+                      vCPU: 4
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: DL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.dl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.dl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.dl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 16
+                      vCPU: 8
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: DXL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.dxl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.dxl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.dxl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 32
+                      vCPU: 16
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: D2XL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.d2xl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.d2xl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.d2xl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 64
+                      vCPU: 32
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: S2XS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.s2xs
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.s2xs
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.s2xs
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 1
+                      vCPU: 1
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: SXS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.sxs
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.sxs
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.sxs
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 2
+                      vCPU: 1
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: SS
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.ss
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.ss
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.ss
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 4
+                      vCPU: 2
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: SM
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.sm
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.sm
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.sm
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 8
+                      vCPU: 4
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: SL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.sl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.sl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.sl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 16
+                      vCPU: 8
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: SXL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.sxl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.sxl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.sxl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 32
+                      vCPU: 16
+                  - labels:
+                      architecture: amd64
+                      provider: seca
+                      tier: S2XL
+                    metadata:
+                      apiVersion: v1
+                      kind: instance-sku
+                      name: seca.s2xl
+                      provider: seca.compute/v1
+                      ref: seca.compute/v1/tenants/tn-1/skus/seca.s2xl
+                      region: eu-central-1
+                      resource: tenants/tn-1/skus/seca.s2xl
+                      tenant: ts-1
+                      verb: get
+                    spec:
+                      ram: 64
+                      vCPU: 32
+                metadata:
+                  provider: seca.compute/v1
+                  resource: tenants/1/skus
+                  verb: list
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/skus/{name}:
+    get:
+      tags:
+        - Sku
+      security:
+        - bearerAuth: []
+      summary: Get sku
+      description: |
+        Get a specific sku, useful for polling status updates of resources.
+        A `404` response without proper schema has to be ignored and must be
+        understood as server being unavailable. Only a response with proper schema
+        can be trusted.
+      operationId: getSku
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstanceSku'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/workspaces/{workspace}/instances:
+    get:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: List instances
+      description: |
+        Lists instances and provides paginated, filtered access.
+      operationId: listInstances
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/labelSelector'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/skipTokenParam'
+        - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstanceIterator'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/workspaces/{workspace}/instances/{name}:
+    get:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: Get instance
+      description: |
+        Get a specific instance, useful for polling status updates of resources.
+        A `404` response without proper schema has to be ignored and must be
+        understood as server being unavailable. Only a response with proper schema
+        can be trusted.
+      operationId: getInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: Create or update instance
+      description: |
+        Creates or updates a instance. The return code of the endpoint
+        provides indicates if the resource was created or updated. A client
+        must accept both as successful response to the request.
+      operationId: createOrUpdateInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      requestBody:
+        description: |
+          Any provided `metadata` on the instance will be ignored by the resource server.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Instance'
+      responses:
+        '200':
+          description: |
+            Instance successfully updated, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '201':
+          description: |
+            Instance successfully created, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: Delete instance
+      description: |
+        Deletes a instance using the given name. In case the resource workspace
+        already deleted `404` is returned. For failure tolerance in case of retry the
+        client needs to accept `404` and `202` as a successful deletion. In case the
+        client tries to delete a resource for the first time and gets a `404`, the
+        resource might not exist for other reasons or never existed in the first 
+        place. This can't be assumed as a safe deletion of the resource. 
+        If deletion of the resource takes longer deletion can be 
+        issued multiple times with the same result `202`, in all cased the resource
+        will be only deleted once. A client must verify the client response to contain
+        a proper error schema. A `404` response without proper schema has to be ignored
+        and understood as server unavailable error.
+      operationId: deleteInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: Instance deletion accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/workspaces/{workspace}/instances/{name}/start:
+    post:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: start instance
+      description: |
+        Power on (boot) a specific instance
+      operationId: StartInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: action accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/workspaces/{workspace}/instances/{name}/stop:
+    post:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: stop instance
+      description: |
+        Power off (shutdown) a specific instance
+      operationId: StopInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: action accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1/tenants/{tenant}/workspaces/{workspace}/instances/{name}/restart:
+    post:
+      tags:
+        - Instance
+      security:
+        - bearerAuth: []
+      summary: restart instance
+      description: |
+        Power cycle (reboot) a specific instance
+      operationId: RestartInstance
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: action accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Use a JWT token for authentication. The token identifies the user,
+        and policies (RBAC, ABAC, or hybrid) determine authorization.
+  schemas:
+    SkuIterator:
+      description: Iterator for skus
+      type: object
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          description: List of skus
+          type: array
+          items:
+            $ref: '#/components/schemas/InstanceSku'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    InstanceIterator:
+      description: Iterator for instances
+      type: object
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          description: List of instances
+          type: array
+          items:
+            $ref: '#/components/schemas/Instance'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    Labels:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to
+        organize and categorize resources. They can be used to filter resources.
+        The number of labels is eventually limited by the CSP.
+      additionalProperties:
+        type: string
+        maxLength: 63
+      example:
+        env: production
+    Annotations:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to add annotations.
+        The number of annotations is eventually limited by the CSP.
+      additionalProperties:
+        type: string
+        maxLength: 1024
+      example:
+        description: Human readable description
+    Extensions:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to add extensions.
+        Extensions are subject to validation by the CSP, and any value that is not accepted will be rejected during admission.
+      additionalProperties:
+        type: string
+    SystemResourceMetadata:
+      type: object
+      description: Metadata for user-defined resource properties
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        annotations:
+          $ref: '#/components/schemas/Annotations'
+        extensions:
+          $ref: '#/components/schemas/Extensions'
+    NameMetadata:
+      type: object
+      readOnly: true
+      required:
+        - name
+      description: Metadata for resource names
+      properties:
+        name:
+          type: string
+          description: |
+            Resource identifier in dash-case (kebab-case) format. Must start and end with an alphanumeric character.
+            Can contain lowercase letters, numbers, and hyphens. Multiple segments can be joined with dots.
+            Each segment follows the same rules.
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          example: resource-name
+    PermissionMetadata:
+      type: object
+      readOnly: true
+      description: Metadata for permission management
+      required:
+        - provider
+        - resource
+        - verb
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: seca.compute/v1
+        resource:
+          type: string
+          minLength: 1
+          maxLength: 256
+          example: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb:
+          type: string
+          minLength: 1
+          maxLength: 7
+          example: get
+      example:
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ReferenceURN:
+      type: string
+      minLength: 1
+      description: |
+        A unique resource name (URN) used to identify and reference this resource.
+
+        The URN is NOT a URL — it does not contain a protocol scheme (http/https), a host,
+        or any endpoint-specific prefix. It is a portable, transport-agnostic identifier.
+        A configured SDK client — which knows the provider's base URL and endpoint mapping —
+        can derive a URL from a URN, but the URN alone cannot be turned into a URL without
+        that SDK configuration context. This separation keeps the URN portable across
+        environments and CSP deployments.
+
+        The full URN format is:
+          `{provider}/{version}/tenants/{tenant}/workspaces/{workspace}/{type}/{name}`
+
+        For hierarchical (nested) resources, additional parent path segments are included:
+          `seca.network/v1/tenants/tn-1/workspaces/ws-1/networks/my-net/route-tables/my-rt`
+
+        ### Automatic Prefix Inference
+
+        In most cases, the prefix of the URN can be automatically derived in the given context.
+        To simplify usage, only the resource type and name might be specified as a reference
+        using the `<type>/<name>` notation. The suffix can be made more specific by adding
+        additional segments separated by slashes.
+
+        The prefix is automatically inferred from the context. For example, if the resource is a
+        block storage in the same workspace the reference can be specified as
+        `block-storages/my-block-storage`. If the resource is a block storage in a different workspace, the
+        reference can be specified as `workspaces/ws-1/block-storages/my-block-storage`.
+
+        For automatic prefix inference, the following rules apply:
+        - the version is inferred from the current resource version
+        - the workspace is inferred from the current workspace
+        - the region is inferred from the current region
+        - the provider is inferred from the type and context of the usage
+
+        The prefix inference is resolved on admission into the full URN format, which makes it
+        mostly suitable for human use.
+      maxLength: 255
+      example: seca.compute/v1/tenants/tn-1/workspaces/ws-1/instances/my-server
+    TypeMetadata:
+      type: object
+      readOnly: true
+      required:
+        - apiVersion
+        - kind
+        - ref
+      description: |
+        Metadata for all resources with type information.
+      properties:
+        apiVersion:
+          type: string
+          description: API version of the resource
+          minLength: 1
+          maxLength: 16
+          default: v1
+        kind:
+          type: string
+          description: Type of the resource
+          enum:
+            - activity-log
+            - block-storage
+            - image
+            - instance
+            - instance-sku
+            - internet-gateway
+            - network
+            - network-load-balancer
+            - network-sku
+            - nic
+            - object-storage-account
+            - public-ip
+            - region
+            - role
+            - role-assignment
+            - routing-table
+            - security-group
+            - security-group-rule
+            - storage-sku
+            - subnet
+            - workspace
+          x-enumNames:
+            - ResourceKindActivityLog
+            - ResourceKindBlockStorage
+            - ResourceKindImage
+            - ResourceKindInstance
+            - ResourceKindInstanceSku
+            - ResourceKindInternetGateway
+            - ResourceKindNetwork
+            - ResourceKindNetworkLoadBalancer
+            - ResourceKindNetworkSku
+            - ResourceKindNic
+            - ResourceKindObjectStorageAccount
+            - ResourceKindPublicIP
+            - ResourceKindRegion
+            - ResourceKindRole
+            - ResourceKindRoleAssignment
+            - ResourceKindRoutingTable
+            - ResourceKindSecurityGroup
+            - ResourceKindSecurityGroupRule
+            - ResourceKindStorageSku
+            - ResourceKindSubnet
+            - ResourceKindWorkspace
+        ref:
+          $ref: '#/components/schemas/ReferenceURN'
+    TenantMetadata:
+      type: object
+      description: Metadata for resources with tenant constraints
+      readOnly: true
+      required:
+        - tenant
+      properties:
+        tenant:
+          type: string
+          description: Tenant identifier
+          minLength: 1
+          maxLength: 64
+    RegionalMetadata:
+      type: object
+      description: Metadata for regional resources
+      readOnly: true
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          description: Reference to the region where the resource is located
+          minLength: 1
+          maxLength: 64
+          example: eu-central-1
+    SkuResourceMetadata:
+      description: |
+        Metadata for SKU resources with name, permission, type, tenant and region information.
+      allOf:
+        - $ref: '#/components/schemas/NameMetadata'
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - $ref: '#/components/schemas/TypeMetadata'
+        - $ref: '#/components/schemas/TenantMetadata'
+        - $ref: '#/components/schemas/RegionalMetadata'
+    InstanceSkuSpec:
+      type: object
+      description: |
+        Specification of the instance SKU, including its capabilities and extensions.
+      required:
+        - vCPU
+        - ram
+      properties:
+        vCPU:
+          type: integer
+          description: |
+            The number of virtual CPUs (vCPUs) allocated to the instance SKU.
+            This value represents the number of cores visible to the operating system.
+            It does not specify the number of physical processors or hyper-threads available.
+          minimum: 1
+          maximum: 60
+          example: 2
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '60'
+        ram:
+          type: integer
+          description: |
+            The amount of RAM (Random Access Memory) allocated to the instance SKU in gigabytes.
+            This value represents the total memory available to the instance.
+          minimum: 1
+          maximum: 65536
+          example: 230
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '65536'
+    InstanceSku:
+      description: |
+        Represents a Stock Keeping Unit (SKU) for compute instances.
+      allOf:
+        - $ref: '#/components/schemas/SystemResourceMetadata'
+        - type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/SkuResourceMetadata'
+            spec:
+              $ref: '#/components/schemas/InstanceSkuSpec'
+    ResponseMetadata:
+      description: |
+        Metadata for response objects.
+      allOf:
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - type: object
+          readOnly: true
+          properties:
+            skipToken:
+              type: string
+              description: Opaque cursor to get the next page. Field is omitted when there are no more pages available.
+              maxLength: 5
+      example:
+        skipToken: 'false'
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ErrorSource:
+      type: object
+      description: An object containing references to the source of the error.
+      required:
+        - pointer
+        - parameter
+      properties:
+        pointer:
+          type: string
+          description: A JSON Pointer [RFC6901] to the associated entity in the request document.
+          minLength: 1
+          maxLength: 256
+        parameter:
+          type: string
+          description: A string indicating which URI query parameter caused the error.
+          minLength: 1
+          maxLength: 64
+    Error:
+      type: object
+      description: |
+        A detailed error response see https://datatracker.ietf.org/doc/html/rfc7807.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - sources
+      properties:
+        type:
+          type: string
+          description: The type of error, expressed as a URI.
+          minLength: 1
+          maxLength: 4000
+          example: https://httpstatuses.io/400
+        title:
+          type: string
+          description: |
+            A short, human-readable summary of the problem
+            type.  It SHOULD NOT change from occurrence to occurrence of the
+            problem, except for purposes of localization (e.g., using
+            proactive content negotiation; see [RFC7231], Section 3.4).
+          minLength: 1
+          maxLength: 1024
+        status:
+          type: number
+          description: |
+            The HTTP status type ([http://secapi.cloud/errors/-rfc7231], Section 6)
+            generated by the origin server for this occurrence of the problem.
+          minimum: 100
+          maximum: 599
+          example: 400
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          minLength: 1
+          maxLength: 32768
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+          minLength: 1
+          maxLength: 256
+        sources:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/ErrorSource'
+        meta:
+          type: object
+          description: A meta object containing non-standard meta-information about the error.
+    Error400:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 400 Bad Request error response
+      example:
+        status: 400
+        type: http://secapi.cloud/errors/invalid-request
+        title: Bad Request
+        detail: The request was invalid or cannot be served.
+        instance: /errors/400
+        sources: []
+    Error401:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 401 Unauthorized error response
+      example:
+        status: 401
+        type: http://secapi.cloud/errors/unauthorized
+        title: Unauthorized
+        detail: Authentication is required and has failed or has not been provided.
+        instance: /errors/401
+        sources: []
+    Error403:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 403 Forbidden error response
+      example:
+        status: 403
+        type: http://secapi.cloud/errors/forbidden
+        title: Forbidden
+        detail: The request was valid, but the server is refusing action.
+        instance: /errors/403
+        sources: []
+    Error500:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 500 Internal Server Error error response
+      example:
+        status: 500
+        type: http://secapi.cloud/errors/internal-server-error
+        title: Internal Server Error
+        detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+        instance: /errors/500
+        sources: []
+    Error404:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 404 Not Found error response
+      example:
+        status: 404
+        type: http://secapi.cloud/errors/resource-not-found
+        title: Not Found
+        detail: The requested resource could not be found.
+        instance: /errors/404
+        sources: []
+    UserResourceMetadata:
+      type: object
+      description: Metadata for user-defined resource properties
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        annotations:
+          $ref: '#/components/schemas/Annotations'
+        extensions:
+          $ref: '#/components/schemas/Extensions'
+    ModificationMetadata:
+      type: object
+      readOnly: true
+      description: Base metadata for all resources with optional region references
+      required:
+        - createdAt
+        - lastModifiedAt
+        - resourceVersion
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created. The field is set by the provider and should not be modified by the user.
+        deletedAt:
+          type: string
+          format: date-time
+          description: If set, indicates the time when the resource was marked for deletion. Resources with this field set are considered pending deletion.
+        lastModifiedAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created or last modified. Field is used for "If-Unmodified-Since" logic for concurrency control. The provider guarantees that a modification on a single resource can happen only once every millisecond.
+        resourceVersion:
+          type: integer
+          description: Incremented on every modification of the resource. Used for optimistic concurrency control.
+          minimum: 1
+          format: int64
+    WorkspaceMetadata:
+      type: object
+      description: Metadata for resources with workspace constraints
+      readOnly: true
+      required:
+        - workspace
+      properties:
+        workspace:
+          type: string
+          description: Workspace identifier
+          minLength: 1
+          maxLength: 64
+    RegionalWorkspaceResourceMetadata:
+      description: |
+        Metadata for regional resources with name, permission, modification, type, tenant and workspace and region information.
+      allOf:
+        - $ref: '#/components/schemas/NameMetadata'
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - $ref: '#/components/schemas/ModificationMetadata'
+        - $ref: '#/components/schemas/TypeMetadata'
+        - $ref: '#/components/schemas/TenantMetadata'
+        - $ref: '#/components/schemas/WorkspaceMetadata'
+        - $ref: '#/components/schemas/RegionalMetadata'
+    Reference:
+      type: object
+      description: |
+        A reference to a resource using an object. The object contains the
+        same information as the ReferenceURN, but is represented as a structured object.
+        The advantage of this representation is that it can be used to reference
+        resources in different workspaces or regions without the need to specify
+        the full URN.
+      required:
+        - resource
+      properties:
+        region:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Region of the resource. If not set, the region is inferred from the context.
+          maxLength: 64
+          example: eu-central-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        provider:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Provider of the resource. If not set, the provider is inferred from the context.
+          maxLength: 64
+          example: seca.compute/v1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        tenant:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Tenant of the resource. If not set, the tenant is inferred from the context.
+          maxLength: 64
+          example: tenant-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        workspace:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Workspace of the resource. If not set, the workspace is inferred from the context.
+          maxLength: 64
+          example: workspace-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        resource:
+          type: string
+          description: |
+            Resource-specific path identifying the resource within its workspace context.
+            This is the segment of the full URN after the provider, version, tenant, and
+            workspace parts. For a flat resource it is `<type>/<name>`, and for hierarchical
+            (nested) resources it includes the parent path segments:
+              `networks/<network-name>/route-tables/<rt-name>`
+            The provider, tenant, and workspace can be specified as separate fields in this
+            object; they do not need to be repeated here.
+          minLength: 1
+          maxLength: 256
+          example: instances/my-server
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '256'
+    Zone:
+      type: string
+      description: Reference to a specific zone within a region
+      minLength: 1
+      maxLength: 32
+      example: a
+    VolumeReference:
+      type: object
+      description: Represents a connection between a Block Storage and an a user of the block storage.
+      required:
+        - deviceRef
+      properties:
+        deviceRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the block storage used to store the volume.
+          example:
+            resource: block-storages/block-123
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: The connection type depends on the type of device and type of block storage.
+          enum:
+            - virtio
+          default: virtio
+          x-enumNames:
+            - VolumeReferenceTypeVirtio
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: virtio
+            x-kubebuilder-validation-max-length: '7'
+            x-kubebuilder-default: virtio
+      example:
+        deviceRef:
+          resource: block-storages/block-123
+        type: virtio
+    InstanceSpec:
+      type: object
+      description: |
+        Specification of the instance, including its SKU, network configuration, and storage options.
+      required:
+        - skuRef
+        - zone
+        - bootVolume
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the instance. The SKU is immutable after the instance is created.
+            To change the SKU, the instance must be deleted and recreated with the new SKU reference.
+          example:
+            resource: tenants/seca/skus/s
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.skuRef is immutable
+        primaryNicRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the primary NIC attached to this instance.
+          example:
+            provider: seca.network/v1
+            resource: network-interfaces/nic-123
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/network-interfaces/nic-123
+        additionalNicRefs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 16
+          description: Additional NICs attached to this instance
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to an additional NIC attached to this instance.
+            example:
+              provider: seca.network/v1
+              resource: network-interfaces/nic-124
+              ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/network-interfaces/nic-124
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '16'
+        zone:
+          allOf:
+            - $ref: '#/components/schemas/Zone'
+          description: |
+            The zone in which the instance is deployed. The zone is immutable after the instance is created.
+            To change the zone, the instance must be deleted and recreated with the new zone.
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.zone is immutable
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '32'
+        securityGroupRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the security group associated with this instance.
+          example:
+            provider: seca.network/v1
+            resource: security-groups/sg-123
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/sg-123
+        userData:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Cloud-init user data for instance initialization
+            Example cloud-init user configuration with SSH key:
+          maxLength: 65536
+          example: |
+            #cloud-config
+            packages:
+            - nginx
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '65536'
+        antiAffinityGroup:
+          description: |
+            Anti-affinity group to which this instance belongs.
+            Instances in the same anti-affinity group are placed on different physical hosts.
+            The number of maximum instances in an anti-affinity group is provider-specific.
+          type: string
+          x-go-type-skip-optional-pointer: true
+          maxLength: 64
+          example: exclusive-server
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        sshKeys:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 32
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4096
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '4096'
+          description: |
+            Provider-specific references to SSH keys used in cloud-init vendorData.
+            These references are used to inject SSH public keys during instance initialization
+            through cloud-init's vendor data configuration.
+          example:
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g...
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '4096'
+            x-kubebuilder-validation-max-items: '32'
+        bootVolume:
+          allOf:
+            - $ref: '#/components/schemas/VolumeReference'
+          description: Reference to the block storage used to store the boot volume of the instance.
+        dataVolumes:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 64
+          items:
+            allOf:
+              - $ref: '#/components/schemas/VolumeReference'
+            description: Reference to the block storage used to store an additional volume of the instance.
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '64'
+      example:
+        skuRef:
+          resource: tenants/seca/skus/s
+        zone: a
+        bootVolume:
+          deviceRef:
+            provider: seca.storage/v1
+            resource: block-storages/block-123
+          type: virtio
+    ResourceState:
+      type: string
+      description: |
+        Current phase of the resource:
+        - pending: not available, waiting for other resources
+        - creating: not available, creation started
+        - active: available for data layer usage
+        - updating: available for data layer usage
+        - deleting: maybe still available for data layer user, can fail any moment
+        - error: failed to fulfill the request; would be related to provider issue or customer related input.
+      enum:
+        - pending
+        - creating
+        - active
+        - updating
+        - deleting
+        - error
+      x-enumNames:
+        - ResourceStatePending
+        - ResourceStateCreating
+        - ResourceStateActive
+        - ResourceStateUpdating
+        - ResourceStateDeleting
+        - ResourceStateError
+      example: active
+    StatusCondition:
+      type: object
+      description: |
+        StatusCondition describes the state of a resource at a certain point.
+        Conditions are provider-specific and can represent different states depending on the
+        resource type and provider implementation.
+      required:
+        - state
+        - lastTransitionAt
+      properties:
+        state:
+          $ref: '#/components/schemas/ResourceState'
+        lastTransitionAt:
+          type: string
+          format: date-time
+          description: |
+            LastTransitionAt is the last time the condition transitioned from one
+            status to another. This should be when the underlying condition changed.
+            If that is not known, then using the time when the API field changed is
+            acceptable.
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Type of condition. The condition type is provider-specific and should
+            reflect the specific states relevant to your resource.
+        reason:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            The reason for the condition's last transition in CamelCase.
+            The specific set of reason values is provider-specific and should be
+            documented by the provider.
+          maxLength: 1024
+          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '1024'
+            x-kubebuilder-validation-pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+        message:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            A human-readable message indicating details about the transition.
+          maxLength: 32768
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '32768'
+      example:
+        state: active
+        lastTransitionAt: '2024-11-21T14:39:22Z'
+    Status:
+      type: object
+      readOnly: true
+      description: Current status of the resource
+      required:
+        - conditions
+      properties:
+        state:
+          x-go-type-skip-optional-pointer: true
+          allOf:
+            - $ref: '#/components/schemas/ResourceState'
+        conditions:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/StatusCondition'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '32'
+    InstanceStatus:
+      description: |
+        Current status of the instance.
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          readOnly: true
+          required:
+            - powerState
+          properties:
+            powerState:
+              type: string
+              description: Current power state of the instance.
+              enum:
+                - 'on'
+                - 'off'
+              x-enumNames:
+                - InstanceStatusPowerStateOn
+                - InstanceStatusPowerStateOff
+              example: 'on'
+              x-oapi-codegen-extra-tags:
+                x-kubebuilder-validation-enum: on;off
+            powerStateSince:
+              type: string
+              format: date-time
+              description: Indicates the time when the instance powerState has updated, basecause the instance was started, stoped or restarted. If the instance was never started the field is `null`.
+              example: '2023-01-01T12:00:00Z'
+    Instance:
+      description: |
+        Instance resource representing a virtual machine in the cloud provider's infrastructure.
+        This resource is used to manage the lifecycle of the instance, including its creation,
+        updates, and deletion.
+      allOf:
+        - $ref: '#/components/schemas/UserResourceMetadata'
+        - type: object
+          required:
+            - spec
+          properties:
+            metadata:
+              $ref: '#/components/schemas/RegionalWorkspaceResourceMetadata'
+            spec:
+              $ref: '#/components/schemas/InstanceSpec'
+            status:
+              $ref: '#/components/schemas/InstanceStatus'
+    Error409:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 409 Conflict error response
+      example:
+        status: 409
+        type: http://secapi.cloud/errors/resource-conflict
+        title: Conflict
+        detail: The request could not be completed due to a conflict with the current state of the resource.
+        instance: /errors/409
+        sources: []
+    Error412:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 412 Precondition Failed error response
+      example:
+        status: 412
+        type: http://secapi.cloud/errors/precondition-failed
+        title: Precondition Failed
+        detail: The precondition given in the If-Match header failed.
+        instance: /errors/412
+        sources: []
+    Error422:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 422 Unprocessable Entity error response
+      example:
+        status: 422
+        type: http://secapi.cloud/errors/validation-error
+        title: Unprocessable Entity
+        detail: The request was well-formed but was unable to be followed due to semantic errors.
+        sources:
+          - pointer: /data/attributes/username
+            parameter: username
+        instance: /errors/422
+  parameters:
+    tenantPathParam:
+      name: tenant
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Tenant ID
+    labelSelector:
+      in: query
+      name: labels
+      description: |
+        Filter resources by their labels. Multiple filters are combined with comma.
+        Filter syntax:
+          - Equals: key=value
+          - Not equals: key!=value
+          - Wildcards: \*key\*=\*value\* - substring (contains) match on both key and value. Each `*` can appear at start, end or in the middle to mean "any characters". Example: \*env\*=\*prod\* matches a label key containing "env" whose value contains "prod".
+          - Numeric: key>value, key<value, key>=value, key<=value
+          - Namespaced key examples: 'monitoring:alert-level=high' or 'billing:team=platform'
+      required: false
+      schema:
+        type: string
+        example: cloud:region=us-east-1,billing:team=platform,tier!=dev
+    limitParam:
+      in: query
+      name: limit
+      description: Maximum number of resources to return in the response
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10000
+        default: 1000
+    skipTokenParam:
+      in: query
+      name: skipToken
+      description: Opaque cursor for pagination. Use the skipToken from the previous response to get the next page of results. Note that skipTokens do not guarantee consistency across pages if the underlying data changes between requests
+      required: false
+      schema:
+        type: string
+    acceptHeader:
+      in: header
+      name: Accept
+      schema:
+        type: string
+        default: application/json
+        example: application/json; deleted=true
+        enum:
+          - application/json
+          - application/json; deleted=true
+          - application/json; deleted=only
+        x-enumNames:
+          - AcceptHeaderJson
+          - AcceptHeaderJsonDeletedTrue
+          - AcceptHeaderJsonDeletedOnly
+      description: |
+        Controls whether deleted resources are included:
+        - `"application/json"`: Returns only non-deleted resources
+        - `"application/json; deleted=true"`: Returns both deleted and non-deleted resources
+        - `"application/json; deleted=only"`: Returns only deleted resources
+    resourcePathParam:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        minLength: 1
+        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+      description: Resource name
+    workspacePathParam:
+      name: workspace
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Workspace name
+    ifUnmodifiedSince:
+      in: header
+      name: if-unmodified-since
+      schema:
+        type: integer
+      required: false
+      description: |
+        Returns resources only if they have not been modified since the specified version.
+        Uses metadata.resourceVersion for comparison.
+  responses:
+    Error400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+          example:
+            status: 400
+            type: http://secapi.cloud/errors/invalid-request
+            title: Bad Request
+            detail: The request was invalid or cannot be served.
+            instance: /errors/400
+            sources: []
+    Error401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+          example:
+            status: 401
+            type: http://secapi.cloud/errors/unauthorized
+            title: Unauthorized
+            detail: Authentication is required and has failed or has not been provided.
+            instance: /errors/401
+            sources: []
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+          example:
+            status: 403
+            type: http://secapi.cloud/errors/forbidden
+            title: Forbidden
+            detail: The request was valid, but the server is refusing action.
+            instance: /errors/403
+            sources: []
+    Error500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+          example:
+            status: 500
+            type: http://secapi.cloud/errors/internal-server-error
+            title: Internal Server Error
+            detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+            instance: /errors/500
+            sources: []
+    Error404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+          example:
+            status: 404
+            type: http://secapi.cloud/errors/resource-not-found
+            title: Not Found
+            detail: The requested resource could not be found.
+            instance: /errors/404
+            sources: []
+    Error409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error409'
+          example:
+            status: 409
+            type: http://secapi.cloud/errors/resource-conflict
+            title: Conflict
+            detail: The request could not be completed due to a conflict with the current state of the resource.
+            instance: /errors/409
+            sources: []
+    Error412:
+      description: Precondition Failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error412'
+          example:
+            status: 412
+            type: http://secapi.cloud/errors/precondition-failed
+            title: Precondition Failed
+            detail: The precondition given in the If-Match header failed.
+            instance: /errors/412
+            sources: []
+    Error422:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error422'
+          example:
+            status: 422
+            type: http://secapi.cloud/errors/validation-error
+            title: Unprocessable Entity
+            detail: The subnetRef is not correctly formatted.
+            sources:
+              - pointer: /spec/subnetRef
+                parameter: subnet
+            instance: /errors/422

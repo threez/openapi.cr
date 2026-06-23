@@ -1,0 +1,26 @@
+name: openapi
+version: 0.1.0
+
+authors:
+  - Vincent Landgraf <vincent@landgrafx.de>
+
+targets:
+  cryogen:
+    main: src/openapi/cli.cr
+
+crystal: '>= 1.18.0'
+
+dependencies:
+  crystina:
+    github: threez/crystina.cr
+
+development_dependencies:
+  mux:
+    github: threez/mux.cr
+  kemal:
+    github: kemalcr/kemal
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 1.6.0
+
+license: MIT

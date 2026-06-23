@@ -1,0 +1,30 @@
+version: 2.0
+shards:
+  ameba:
+    git: https://github.com/crystal-ameba/ameba.git
+    version: 1.6.4
+
+  backtracer:
+    git: https://github.com/sija/backtracer.cr.git
+    version: 1.2.4
+
+  crystina:
+    git: https://github.com/threez/crystina.cr.git
+    version: 1.0.0
+
+  exception_page:
+    git: https://github.com/crystal-loot/exception_page.git
+    version: 0.5.0
+
+  kemal:
+    git: https://github.com/kemalcr/kemal.git
+    version: 1.11.0
+
+  mux:
+    git: https://github.com/threez/mux.cr.git
+    version: 0.1.0
+
+  radix:
+    git: https://github.com/luislavena/radix.git
+    version: 0.4.1
+

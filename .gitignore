@@ -1,0 +1,7 @@
+/docs/
+/lib/*
+!/lib/openapi
+/bin/
+/.shards/
+*.dwarf
+/spec/tmp/

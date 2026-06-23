@@ -1,0 +1,1954 @@
+openapi: 3.0.3
+info:
+  title: Activity Log
+  version: v1beta1
+  description: |
+    The Activity Log API provides access to audit logs for all resources.
+    This API is part of the Sovereign European Cloud API.
+servers:
+  - url: https://demo.secapi.cloud/providers/seca.activity-log
+    description: Path Schema
+  - url: https://activity-log.seca.demo.secapi.cloud
+    description: DNS Schema
+security:
+  - bearerAuth: []
+tags:
+  - name: Activity Log
+    description: Activity Log management
+paths:
+  /v1beta1/tenants/{tenant}/workspaces/{workspace}/activity-logs:
+    get:
+      tags:
+        - Activity Log
+      security:
+        - bearerAuth: []
+      summary: List activity logs
+      description: |
+        Lists activity logs and provides paginated, filtered access.
+      operationId: listActivityLogs
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/labelSelector'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/skipTokenParam'
+        - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLogIterator'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Use a JWT token for authentication. The token identifies the user,
+        and policies (RBAC, ABAC, or hybrid) determine authorization.
+  schemas:
+    ActivityLogIterator:
+      description: Iterator for activity logs
+      type: object
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          description: List of activity logs
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityLog'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    NameMetadata:
+      type: object
+      readOnly: true
+      required:
+        - name
+      description: Metadata for resource names
+      properties:
+        name:
+          type: string
+          description: |
+            Resource identifier in dash-case (kebab-case) format. Must start and end with an alphanumeric character.
+            Can contain lowercase letters, numbers, and hyphens. Multiple segments can be joined with dots.
+            Each segment follows the same rules.
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          example: resource-name
+    PermissionMetadata:
+      type: object
+      readOnly: true
+      description: Metadata for permission management
+      required:
+        - provider
+        - resource
+        - verb
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: seca.compute/v1
+        resource:
+          type: string
+          minLength: 1
+          maxLength: 256
+          example: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb:
+          type: string
+          minLength: 1
+          maxLength: 7
+          example: get
+      example:
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ModificationMetadata:
+      type: object
+      readOnly: true
+      description: Base metadata for all resources with optional region references
+      required:
+        - createdAt
+        - lastModifiedAt
+        - resourceVersion
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created. The field is set by the provider and should not be modified by the user.
+        deletedAt:
+          type: string
+          format: date-time
+          description: If set, indicates the time when the resource was marked for deletion. Resources with this field set are considered pending deletion.
+        lastModifiedAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created or last modified. Field is used for "If-Unmodified-Since" logic for concurrency control. The provider guarantees that a modification on a single resource can happen only once every millisecond.
+        resourceVersion:
+          type: integer
+          description: Incremented on every modification of the resource. Used for optimistic concurrency control.
+          minimum: 1
+          format: int64
+    ReferenceURN:
+      type: string
+      minLength: 1
+      description: |
+        A unique resource name (URN) used to identify and reference this resource.
+
+        The URN is NOT a URL — it does not contain a protocol scheme (http/https), a host,
+        or any endpoint-specific prefix. It is a portable, transport-agnostic identifier.
+        A configured SDK client — which knows the provider's base URL and endpoint mapping —
+        can derive a URL from a URN, but the URN alone cannot be turned into a URL without
+        that SDK configuration context. This separation keeps the URN portable across
+        environments and CSP deployments.
+
+        The full URN format is:
+          `{provider}/{version}/tenants/{tenant}/workspaces/{workspace}/{type}/{name}`
+
+        For hierarchical (nested) resources, additional parent path segments are included:
+          `seca.network/v1/tenants/tn-1/workspaces/ws-1/networks/my-net/route-tables/my-rt`
+
+        ### Automatic Prefix Inference
+
+        In most cases, the prefix of the URN can be automatically derived in the given context.
+        To simplify usage, only the resource type and name might be specified as a reference
+        using the `<type>/<name>` notation. The suffix can be made more specific by adding
+        additional segments separated by slashes.
+
+        The prefix is automatically inferred from the context. For example, if the resource is a
+        block storage in the same workspace the reference can be specified as
+        `block-storages/my-block-storage`. If the resource is a block storage in a different workspace, the
+        reference can be specified as `workspaces/ws-1/block-storages/my-block-storage`.
+
+        For automatic prefix inference, the following rules apply:
+        - the version is inferred from the current resource version
+        - the workspace is inferred from the current workspace
+        - the region is inferred from the current region
+        - the provider is inferred from the type and context of the usage
+
+        The prefix inference is resolved on admission into the full URN format, which makes it
+        mostly suitable for human use.
+      maxLength: 255
+      example: seca.compute/v1/tenants/tn-1/workspaces/ws-1/instances/my-server
+    TypeMetadata:
+      type: object
+      readOnly: true
+      required:
+        - apiVersion
+        - kind
+        - ref
+      description: |
+        Metadata for all resources with type information.
+      properties:
+        apiVersion:
+          type: string
+          description: API version of the resource
+          minLength: 1
+          maxLength: 16
+          default: v1
+        kind:
+          type: string
+          description: Type of the resource
+          enum:
+            - activity-log
+            - block-storage
+            - image
+            - instance
+            - instance-sku
+            - internet-gateway
+            - network
+            - network-load-balancer
+            - network-sku
+            - nic
+            - object-storage-account
+            - public-ip
+            - region
+            - role
+            - role-assignment
+            - routing-table
+            - security-group
+            - security-group-rule
+            - storage-sku
+            - subnet
+            - workspace
+          x-enumNames:
+            - ResourceKindActivityLog
+            - ResourceKindBlockStorage
+            - ResourceKindImage
+            - ResourceKindInstance
+            - ResourceKindInstanceSku
+            - ResourceKindInternetGateway
+            - ResourceKindNetwork
+            - ResourceKindNetworkLoadBalancer
+            - ResourceKindNetworkSku
+            - ResourceKindNic
+            - ResourceKindObjectStorageAccount
+            - ResourceKindPublicIP
+            - ResourceKindRegion
+            - ResourceKindRole
+            - ResourceKindRoleAssignment
+            - ResourceKindRoutingTable
+            - ResourceKindSecurityGroup
+            - ResourceKindSecurityGroupRule
+            - ResourceKindStorageSku
+            - ResourceKindSubnet
+            - ResourceKindWorkspace
+        ref:
+          $ref: '#/components/schemas/ReferenceURN'
+    TenantMetadata:
+      type: object
+      description: Metadata for resources with tenant constraints
+      readOnly: true
+      required:
+        - tenant
+      properties:
+        tenant:
+          type: string
+          description: Tenant identifier
+          minLength: 1
+          maxLength: 64
+    WorkspaceMetadata:
+      type: object
+      description: Metadata for resources with workspace constraints
+      readOnly: true
+      required:
+        - workspace
+      properties:
+        workspace:
+          type: string
+          description: Workspace identifier
+          minLength: 1
+          maxLength: 64
+    RegionalMetadata:
+      type: object
+      description: Metadata for regional resources
+      readOnly: true
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          description: Reference to the region where the resource is located
+          minLength: 1
+          maxLength: 64
+          example: eu-central-1
+    RegionalWorkspaceResourceMetadata:
+      description: |
+        Metadata for regional resources with name, permission, modification, type, tenant and workspace and region information.
+      allOf:
+        - $ref: '#/components/schemas/NameMetadata'
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - $ref: '#/components/schemas/ModificationMetadata'
+        - $ref: '#/components/schemas/TypeMetadata'
+        - $ref: '#/components/schemas/TenantMetadata'
+        - $ref: '#/components/schemas/WorkspaceMetadata'
+        - $ref: '#/components/schemas/RegionalMetadata'
+    Reference:
+      type: object
+      description: |
+        A reference to a resource using an object. The object contains the
+        same information as the ReferenceURN, but is represented as a structured object.
+        The advantage of this representation is that it can be used to reference
+        resources in different workspaces or regions without the need to specify
+        the full URN.
+      required:
+        - resource
+      properties:
+        region:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Region of the resource. If not set, the region is inferred from the context.
+          maxLength: 64
+          example: eu-central-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        provider:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Provider of the resource. If not set, the provider is inferred from the context.
+          maxLength: 64
+          example: seca.compute/v1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        tenant:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Tenant of the resource. If not set, the tenant is inferred from the context.
+          maxLength: 64
+          example: tenant-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        workspace:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Workspace of the resource. If not set, the workspace is inferred from the context.
+          maxLength: 64
+          example: workspace-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        resource:
+          type: string
+          description: |
+            Resource-specific path identifying the resource within its workspace context.
+            This is the segment of the full URN after the provider, version, tenant, and
+            workspace parts. For a flat resource it is `<type>/<name>`, and for hierarchical
+            (nested) resources it includes the parent path segments:
+              `networks/<network-name>/route-tables/<rt-name>`
+            The provider, tenant, and workspace can be specified as separate fields in this
+            object; they do not need to be repeated here.
+          minLength: 1
+          maxLength: 256
+          example: instances/my-server
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '256'
+    BlockStorageSpec:
+      type: object
+      description: |
+        References the SKU used for this block.
+        If a reference to the source image is used as the base for creating this block storage.
+      required:
+        - skuRef
+        - sizeGB
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the block storage. The SKU is immutable after creation.
+            If you want to change the SKU, you need to create a new block storage and migrate the data.
+          example:
+            resource: tenants/seca/skus/n1k
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.skuRef is immutable
+        sizeGB:
+          type: integer
+          description: Size of the block storage in GB.
+          minimum: 1
+          maximum: 1000000
+          example: 10
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self >= oldSelf
+            x-cel-message-0: spec.sizeGB cannot be decreased
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '1000000'
+        sourceImageRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the source image used as the base for creating the block storage.
+          example:
+            resource: images/image-123
+    InstanceSkuSpec:
+      type: object
+      description: |
+        Specification of the instance SKU, including its capabilities and extensions.
+      required:
+        - vCPU
+        - ram
+      properties:
+        vCPU:
+          type: integer
+          description: |
+            The number of virtual CPUs (vCPUs) allocated to the instance SKU.
+            This value represents the number of cores visible to the operating system.
+            It does not specify the number of physical processors or hyper-threads available.
+          minimum: 1
+          maximum: 60
+          example: 2
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '60'
+        ram:
+          type: integer
+          description: |
+            The amount of RAM (Random Access Memory) allocated to the instance SKU in gigabytes.
+            This value represents the total memory available to the instance.
+          minimum: 1
+          maximum: 65536
+          example: 230
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '65536'
+    Zone:
+      type: string
+      description: Reference to a specific zone within a region
+      minLength: 1
+      maxLength: 32
+      example: a
+    VolumeReference:
+      type: object
+      description: Represents a connection between a Block Storage and an a user of the block storage.
+      required:
+        - deviceRef
+      properties:
+        deviceRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the block storage used to store the volume.
+          example:
+            resource: block-storages/block-123
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: The connection type depends on the type of device and type of block storage.
+          enum:
+            - virtio
+          default: virtio
+          x-enumNames:
+            - VolumeReferenceTypeVirtio
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: virtio
+            x-kubebuilder-validation-max-length: '7'
+            x-kubebuilder-default: virtio
+      example:
+        deviceRef:
+          resource: block-storages/block-123
+        type: virtio
+    InstanceSpec:
+      type: object
+      description: |
+        Specification of the instance, including its SKU, network configuration, and storage options.
+      required:
+        - skuRef
+        - zone
+        - bootVolume
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the instance. The SKU is immutable after the instance is created.
+            To change the SKU, the instance must be deleted and recreated with the new SKU reference.
+          example:
+            resource: tenants/seca/skus/s
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.skuRef is immutable
+        primaryNicRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the primary NIC attached to this instance.
+          example:
+            provider: seca.network/v1
+            resource: network-interfaces/nic-123
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/network-interfaces/nic-123
+        additionalNicRefs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 16
+          description: Additional NICs attached to this instance
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to an additional NIC attached to this instance.
+            example:
+              provider: seca.network/v1
+              resource: network-interfaces/nic-124
+              ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/network-interfaces/nic-124
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '16'
+        zone:
+          allOf:
+            - $ref: '#/components/schemas/Zone'
+          description: |
+            The zone in which the instance is deployed. The zone is immutable after the instance is created.
+            To change the zone, the instance must be deleted and recreated with the new zone.
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.zone is immutable
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '32'
+        securityGroupRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the security group associated with this instance.
+          example:
+            provider: seca.network/v1
+            resource: security-groups/sg-123
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/sg-123
+        userData:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Cloud-init user data for instance initialization
+            Example cloud-init user configuration with SSH key:
+          maxLength: 65536
+          example: |
+            #cloud-config
+            packages:
+            - nginx
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '65536'
+        antiAffinityGroup:
+          description: |
+            Anti-affinity group to which this instance belongs.
+            Instances in the same anti-affinity group are placed on different physical hosts.
+            The number of maximum instances in an anti-affinity group is provider-specific.
+          type: string
+          x-go-type-skip-optional-pointer: true
+          maxLength: 64
+          example: exclusive-server
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        sshKeys:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 32
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4096
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '4096'
+          description: |
+            Provider-specific references to SSH keys used in cloud-init vendorData.
+            These references are used to inject SSH public keys during instance initialization
+            through cloud-init's vendor data configuration.
+          example:
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g...
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '4096'
+            x-kubebuilder-validation-max-items: '32'
+        bootVolume:
+          allOf:
+            - $ref: '#/components/schemas/VolumeReference'
+          description: Reference to the block storage used to store the boot volume of the instance.
+        dataVolumes:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 64
+          items:
+            allOf:
+              - $ref: '#/components/schemas/VolumeReference'
+            description: Reference to the block storage used to store an additional volume of the instance.
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '64'
+      example:
+        skuRef:
+          resource: tenants/seca/skus/s
+        zone: a
+        bootVolume:
+          deviceRef:
+            provider: seca.storage/v1
+            resource: block-storages/block-123
+          type: virtio
+    NetworkLoadBalancerPort:
+      type: integer
+      description: Load Balancer port to receive or forward the traffic
+      minimum: 1
+      maximum: 65535
+      example: 443
+      x-oapi-codegen-extra-tags:
+        x-kubebuilder-validation-minimum: '1'
+        x-kubebuilder-validation-maximum: '65535'
+    LoadBalancerHealthCheck:
+      type: object
+      description: Optional port health check. It probes the port with protocol.
+      required:
+        - interval
+        - timeout
+        - retry
+      properties:
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Specifies the type of health check. A `connect` health check attempts
+            to establish a connection to the specified port to determine its health.
+          enum:
+            - connect
+          x-enumNames:
+            - LoadBalancerHealthCheckConnect
+          default: connect
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: connect
+            x-kubebuilder-default: connect
+        interval:
+          type: integer
+          description: health check interval in seconds. It means after how many seconds it will take a new check
+          minimum: 1
+          maximum: 86400
+          example: 10
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '86400'
+        timeout:
+          type: integer
+          description: health check in seconds. It means after how many seconds the attempt will be considered unhealthy
+          minimum: 1
+          maximum: 600
+          example: 5
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '600'
+        retry:
+          type: integer
+          description: health check retry number after considered unhealthy a backend instance
+          minimum: 0
+          maximum: 10
+          example: 3
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '0'
+            x-kubebuilder-validation-maximum: '10'
+    LoadBalancerTarget:
+      type: object
+      description: The target of the LoadBalancer. It can be a set of instances nics. The port can be different from the frontend port, if omitted it will be the same. If no health check is specified, the LoadBalancer will not check the health of the backend instances.
+      required:
+        - members
+      properties:
+        algorithm:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: LoadBalancer algorithm to take a backend instance
+          enum:
+            - round-robin
+          x-enumNames:
+            - LoadBalancerAlgorithmRoundRobin
+          default: round-robin
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: round-robin
+            x-kubebuilder-default: round-robin
+        port:
+          allOf:
+            - $ref: '#/components/schemas/NetworkLoadBalancerPort'
+          description: Backend port to which the load balancer will be forwarding the traffic to
+        members:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          description: Nic reference to the members as part of the LoadBalancerTarget
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to the NIC of a backend instance.
+            example:
+              provider: seca.network/v1
+              resource: nics/nic-1
+              ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/nics/nic-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '1000'
+        healthCheck:
+          $ref: '#/components/schemas/LoadBalancerHealthCheck'
+        proxyProtocol:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Specifies the proxy protocol version. The proxy protocol is used to
+            pass client connection information to the backend instances.
+            If not specified, the default is `none`.
+          enum:
+            - none
+            - v2
+          x-enumNames:
+            - LoadBalancerProxyProtocolNone
+            - LoadBalancerProxyProtocolV2
+          default: none
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: none;v2
+            x-kubebuilder-default: none
+      example:
+        members:
+          - provider: seca.network/v1
+            resource: nics/nic-1
+          - provider: seca.network/v1
+            resource: nics/nic-2
+        healthCheck:
+          interval: 10
+          timeout: 5
+          retry: 3
+    NetworkLoadBalancerFrontend:
+      type: object
+      description: |
+        Represents the frontend configuration of the LoadBalancer. Each frontend
+        can have multiple targets, but the combination of port and protocol must
+        be unique to ensure proper routing.
+      required:
+        - protocol
+        - port
+        - target
+      properties:
+        protocol:
+          type: string
+          description: Frontend Protocol to which the load balancer will be listening on
+          enum:
+            - tcp
+            - udp
+            - both
+          x-enumNames:
+            - LoadBalancerProtocolTCP
+            - LoadBalancerProtocolUDP
+            - LoadBalancerProtocolBoth
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: tcp;udp;both
+        port:
+          allOf:
+            - $ref: '#/components/schemas/NetworkLoadBalancerPort'
+          description: Frontend port to which the load balancer will be listening on
+        target:
+          $ref: '#/components/schemas/LoadBalancerTarget'
+    NetworkLoadBalancerSpec:
+      type: object
+      description: |
+        Defines the specification for a Network Load Balancer. A Load Balancer can have multiple
+        frontends, where each frontend may target multiple backend instances. Frontend ports and
+        protocols must be unique to ensure proper routing. The NIC associated with the proxy
+        determines whether the Load Balancer is internal or external.
+      required:
+        - nicRef
+        - frontends
+      properties:
+        nicRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the NIC attached to the load balancer.
+          example:
+            provider: seca.network/v1
+            resource: nics/lb-1
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/nics/lb-1
+        securityGroupRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the security group associated with this instance.
+          example:
+            provider: seca.network/v1
+            resource: security-groups/sg-123
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/sg-123
+        frontendPort:
+          allOf:
+            - $ref: '#/components/schemas/NetworkLoadBalancerPort'
+          description: Frontend port to which the load balancer will be listening on
+        backendPort:
+          allOf:
+            - $ref: '#/components/schemas/NetworkLoadBalancerPort'
+          description: Backend port to which the load balancer will be forwarding the traffic to
+        frontends:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/NetworkLoadBalancerFrontend'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '50'
+    NetworkSkuSpec:
+      type: object
+      description: |
+        Specification of the network SKU, including its bandwidth and packets per second.
+      required:
+        - bandwidth
+        - packets
+      properties:
+        bandwidth:
+          type: integer
+          description: |
+            The bandwidth in Mbps (Megabits per second).
+          minimum: 1
+          maximum: 800000
+          example: 1000
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '800000'
+        packets:
+          type: integer
+          description: |
+            The number of packets per second (PPS) that the network SKU can handle.
+          minimum: 1
+          maximum: 200000000000
+          example: 10000
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '200000000000'
+    cidr:
+      type: object
+      description: |
+        Combined IPv4 and IPv6 CIDR block for a subnet. Depending on the network
+        configuration, either the IPv4 or IPv6 range can be omitted. So the following
+        combinations are possible:
+
+        * IPv4 only
+        * IPv6 only
+        * IPv4 and IPv6 (Dual Stack)
+      properties:
+        ipv4:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            IPv4 CIDR block for the subnet.
+          minLength: 9
+          maxLength: 18
+          example: 10.0.100.0/24
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '9'
+            x-kubebuilder-validation-max-length: '18'
+            x-cel-rule-0: self.size() == 0 || (isCIDR(self) && cidr(self).ip().family() == 4)
+            x-cel-message-0: cidr.ipv4 must be a valid IPv4 CIDR block
+        ipv6:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            IPv6 CIDR block for the subnet.
+          minLength: 4
+          maxLength: 43
+          example: 2001:db8::/32
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '4'
+            x-kubebuilder-validation-max-length: '43'
+            x-cel-rule-0: self.size() == 0 || (isCIDR(self) && cidr(self).ip().family() == 6)
+            x-cel-message-0: cidr.ipv6 must be a valid IPv6 CIDR block
+    NetworkSpec:
+      type: object
+      description: |
+        A Network represents a virtual network that can be used to isolate resources.
+        Key network concepts:
+
+        * Defines a range of IP addresses for compute resources (e.g. instances)
+        * Enables network segmentation and isolation
+        * Provides common performance configuration across the network using a SKU
+
+        The `cidr` is the base CIDR block for the network. Additional CIDR blocks can be
+        added to the network using the `additionalCidrs` field. The `additionalCidrs` can
+        be changed after the network is created in case they are not used. The main CIDR
+        block cannot be changed after the network is created. All cidrs must be non-overlapping.
+        The cidrs have to be part of the RFC 1918 address space in case of IPv4 and or RFC 4193.
+
+        In case the system should automatically assign IP addresses to the network cidrs
+        only the network prefix is required. E.g. to request a /16 IPv4 CIDR block the
+        CIDR block would be `0.0.0.0/16` and for a /56 IPv6 CIDR block the CIDR block would
+        be `::/56`. Most CSP will not allow to use a different IPv6 prefix length than /56.
+
+        Route tables associated with this network automatically include local routes for
+        all network CIDRs (including `additionalCidrs`). These network-local routes are
+        present by default and cannot be removed.
+      required:
+        - cidr
+        - skuRef
+      properties:
+        cidr:
+          $ref: '#/components/schemas/cidr'
+        additionalCidrs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/cidr'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '32'
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU used by default for all NIC in this Network.
+            Can be overridden by the NIC. The SKU is immutable after the network is created.
+            To change the SKU, the network must be deleted and recreated with the new SKU reference.
+          example:
+            resource: tenants/seca/skus/n1k
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.skuRef is immutable
+      example:
+        skuRef:
+          resource: tenants/seca/skus/n1k
+        cidr:
+          ipv4: 0.0.0.0/16
+          ipv6: '::/56'
+    NicIp:
+      type: string
+      description: |
+        IP address for the NIC. The IP is either IPv4 or IPv6. The IP
+        can be `0.0.0.0` or `::` to indicate that the IP needs to be assigned
+        automatically. The IP can also be a specific IP address.
+        If not provided, the mutate admission controller will populate this value using the default values for ipv4 and ipv6.
+      minLength: 1
+      maxLength: 39
+    NicSpec:
+      type: object
+      description: |
+        Specification of the Network Interface Card
+
+        The referenced SKU overwrites the default. In case of different network SKU references
+        the highest possible network SKU reference is used. The network SKU reference
+        might be restricted by the instance size.
+      required:
+        - addresses
+        - subnetRef
+      properties:
+        securityGroupRefs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 16
+          description: References to the security groups associated with this NIC.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to a security group.
+            example:
+              provider: seca.network/v1
+              resource: security-groups/sg-123
+              ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/sg-123
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '16'
+        addresses:
+          type: array
+          description: |
+            List of IP addresses for the NIC. A specific IP address needs to be in the
+            CIDR range of the subnet and not used by any other NIC in the subnet. Multiple
+            IP addresses can be assigned to a NIC. The number of IP addresses might be
+            limited by the CSP or the subnet size.
+          example:
+            - 10.100.0.10
+            - 0.0.0.0
+            - '::'
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/NicIp'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '39'
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '32'
+            x-cel-rule-0: self.all(x, isIP(x))
+            x-cel-message-0: all IP addresses must be valid IPv4 or IPv6 addresses
+        publicIpRefs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 16
+          description: |
+            References to public IP addresses associated with this NIC. The IP may be external
+            and not directly visible on the server/NIC itself.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to a public IP address associated with this NIC.
+            example:
+              resource: public-ips/public-ip-123
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '16'
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the NIC. The SKU is immutable after the NIC is created.
+            To change the SKU, the NIC must be deleted and recreated with the new SKU reference.
+          example:
+            resource: tenants/seca/skus/n1k
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: '!oldSelf.hasValue() || self == oldSelf.value()'
+            x-cel-message-0: spec.skuRef is immutable
+        subnetRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the subnet used by the NIC connections.
+          example:
+            resource: seca.networks/subnet-a1b2c3
+      example:
+        addresses:
+          - 10.100.0.10
+          - 0.0.0.0
+          - '::'
+        skuRef:
+          resource: tenants/seca/skus/n1k
+        subnetRef:
+          resource: seca.networks/subnet-a1b2c3
+    ObjectStorageAccountSpec:
+      type: object
+      description: |
+        The specification of an object storage account, including the region and zone.
+    IPVersion:
+      type: string
+      description: IP version of the address
+      enum:
+        - IPv4
+        - IPv6
+      x-enumNames:
+        - IPVersionIPv4
+        - IPVersionIPv6
+      x-oapi-codegen-extra-tags:
+        x-kubebuilder-validation-enum: IPv4;IPv6
+    PublicIpSpec:
+      type: object
+      description: |
+        Specification of the public IP.
+      required:
+        - version
+      properties:
+        version:
+          $ref: '#/components/schemas/IPVersion'
+        address:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: The public IP address in case of BYOIP.
+          maxLength: 39
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self.size() == 0 || isIP(self)
+            x-cel-message-0: spec.address must be a valid IPv4/IPv6 address
+            x-kubebuilder-validation-max-length: '39'
+      example:
+        version: IPv4
+    RoleAssignmentScope:
+      type: object
+      description: |
+        Role assignment scope, including the workspaces, regions and tenants.
+      properties:
+        tenants:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 64
+          description: |
+            Optionally, can be opened to all tenants or restricted to a specific tenant.
+            If not specified, the role assignment is valid for the current tenant.
+          example:
+            - tenant-1
+          items:
+            type: string
+            description: |
+              Tenant ID for the role assignment. A `*` wildcard can be used
+              to represent all tenants. This allows the role assignment to
+              be applied to other tenants if needed.
+            minLength: 1
+            maxLength: 64
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '64'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '64'
+            x-kubebuilder-validation-max-items: '64'
+        regions:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 64
+          description: |
+            Optionally, a restriction can be applied to the region
+            where the role assignment is valid. If not specified,
+            the role assignment is valid for all regions.
+          example:
+            - region-1
+          items:
+            type: string
+            description: |
+              Region ID for the role assignment
+            minLength: 1
+            maxLength: 64
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '64'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '64'
+            x-kubebuilder-validation-max-items: '64'
+        workspaces:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 256
+          description: |
+            Optionally, a restriction can be applied to the workspace
+            where the role assignment is valid. If not specified,
+            the role assignment is valid for all workspaces.
+          example:
+            - workspace-1
+          items:
+            type: string
+            description: |
+              Workspace ID for the role assignment.
+            minLength: 1
+            maxLength: 64
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '64'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '64'
+            x-kubebuilder-validation-max-items: '256'
+    RoleAssignmentSpec:
+      type: object
+      description: |
+        Role assignment for a user account. The role is assigned to the user account in the context of the specified scopes.
+      required:
+        - subs
+        - scopes
+        - roles
+      properties:
+        subs:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '128'
+          description: |
+            List of subject IDs (from JWT) to whom the roles are assigned,
+            A wildcard `*` can be used to represent all users of the tenant scopes
+          example:
+            - user1@example.com
+            - service-account-1
+          maxItems: 256
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '128'
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '256'
+        scopes:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items:
+            $ref: '#/components/schemas/RoleAssignmentScope'
+          description: List of scopes (e.g., tenant, workspace) for the role assignment
+          example:
+            - workspaces:
+                - workspace-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '256'
+        roles:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '64'
+          description: List of assigned role names
+          example:
+            - project-manager
+            - workspace-viewer
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '64'
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '32'
+    Permission:
+      type: object
+      description: |
+        Permission specification, including providers, resources, and verbs.
+        Permissions are used to define access control policies for user accounts.
+      required:
+        - provider
+        - resources
+        - verb
+      properties:
+        provider:
+          type: string
+          description: |
+            The provider for which the resource and verbs are defined.
+          minLength: 1
+          maxLength: 64
+          example: seca.storage/v1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '64'
+        resources:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+            maxLength: 256
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '256'
+          description: |
+            The resources are the specific resources that the permission applies to.
+            The resource can be a wildcard `*` to represent all resources or a
+            specific resource type. For example, `images/my-image` or
+            `images/*`.
+          example:
+            - images/*
+            - skus/*
+          maxItems: 256
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '256'
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '256'
+        verb:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+            maxLength: 7
+            x-oapi-codegen-extra-tags:
+              x-kubebuilder-validation-max-length: '7'
+          description: |
+            The verb is a string that represents the action to be performed on a resource.
+            The standard operations are defined as `get`, `put`, `list`, `delete`. If the
+            resource has additional actions they can to be permitted individually as
+            verb and action in the form `<verb>:<action>`. For example, `post.start`,
+            `post.stop`, `post.restart` or with a wildcard for all actions `post`.
+          example:
+            - read
+            - write
+          maxItems: 16
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-min-length: '1'
+            x-kubebuilder-validation-items-max-length: '7'
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '16'
+    RoleSpec:
+      type: object
+      description: |
+        Role specification defined as a list of permissions.
+        Roles are used to define access control policies for
+        a user account using a role assignment.
+      required:
+        - permissions
+      properties:
+        permissions:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items:
+            $ref: '#/components/schemas/Permission'
+          description: List of permissions granted by this role
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-items: '1'
+            x-kubebuilder-validation-max-items: '256'
+          example:
+            - provider: seca.storage/v1
+              resources:
+                - images/*
+                - block-storages/*
+              verb:
+                - get
+                - list
+            - provider: seca.compute/v1
+              resources:
+                - instances/*
+              verb:
+                - get
+                - list
+            - provider: seca.network/v1
+              resources:
+                - networks/*
+                - subnets/*
+                - route-tables/*
+                - nics/*
+                - internet-gateways/*
+                - security-groups/*
+                - public-ips/*
+              verb:
+                - get
+                - list
+    Annotations:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to add annotations.
+        The number of annotations is eventually limited by the CSP.
+      additionalProperties:
+        type: string
+        maxLength: 1024
+      example:
+        description: Human readable description
+    Port:
+      description: |
+        A valid network port number.
+        The port number is a 16-bit unsigned integer ranging from 1 to 65535.
+      type: integer
+      minimum: 1
+      maximum: 65535
+      example: 80
+      x-oapi-codegen-extra-tags:
+        x-kubebuilder-validation-minimum: '1'
+        x-kubebuilder-validation-maximum: '65535'
+    Ports:
+      type: object
+      description: |
+        Defines a specific port list or port range for the rule.
+        The configuration allows specifying individual ports, ranges, or a combination of both.
+
+        Behavior:
+        - If only `from` is specified, the range is interpreted as a single port: `from` to `from`.
+        - If only `to` is specified, the range is interpreted as a single port: `to` to `to`.
+        - If both `from` and `to` are specified, the range spans from `from` to `to`.
+        - The `list` property can be used to explicitly define additional individual ports.
+
+        The final result is a comprehensive list of ports and/or port ranges.
+      properties:
+        from:
+          x-go-type-skip-optional-pointer: true
+          allOf:
+            - $ref: '#/components/schemas/Port'
+        to:
+          x-go-type-skip-optional-pointer: true
+          allOf:
+            - $ref: '#/components/schemas/Port'
+        list:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Port'
+          example:
+            - 80
+            - 443
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-minimum: '1'
+            x-kubebuilder-validation-items-maximum: '65535'
+            x-kubebuilder-validation-max-items: '100'
+    IcmpConfig:
+      type: object
+      description: ICMP specific rule configuration
+      required:
+        - type
+        - code
+      properties:
+        type:
+          type: integer
+          description: ICMP type
+          minimum: 0
+          maximum: 8
+          example: 8
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '0'
+            x-kubebuilder-validation-maximum: '8'
+        code:
+          type: integer
+          description: ICMP code
+          minimum: 0
+          maximum: 5
+          example: 4
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '0'
+            x-kubebuilder-validation-maximum: '5'
+    SecurityGroupRuleSpec:
+      type: object
+      description: |
+        Specification of a security group rule defining network access permissions.
+        If no version is specified, any IP version will be allowed.
+        If no protocol is specified, any network protocol will be allowed.
+      required:
+        - direction
+      properties:
+        annotations:
+          $ref: '#/components/schemas/Annotations'
+        direction:
+          type: string
+          enum:
+            - ingress
+            - egress
+          x-enumNames:
+            - SecurityGroupRuleDirectionIngress
+            - SecurityGroupRuleDirectionEgress
+          description: |
+            Direction of the traffic flow:
+            * ingress: Only incoming traffic is allowed
+            * egress: Only outgoing traffic is allowed
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: ingress;egress
+            x-kubebuilder-validation-max-length: '7'
+        version:
+          x-go-type-skip-optional-pointer: true
+          allOf:
+            - $ref: '#/components/schemas/IPVersion'
+        protocol:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: Network protocol for the rule
+          enum:
+            - tcp
+            - udp
+            - tcp+udp
+            - icmp
+          x-enumNames:
+            - SecurityGroupRuleProtocolTCP
+            - SecurityGroupRuleProtocolUDP
+            - SecurityGroupRuleProtocolTCPUDP
+            - SecurityGroupRuleProtocolICMP
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: tcp;udp;tcp+udp;icmp
+            x-kubebuilder-validation-max-length: '7'
+        ports:
+          $ref: '#/components/schemas/Ports'
+        icmp:
+          $ref: '#/components/schemas/IcmpConfig'
+        sourceRef:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 32
+          description: |
+            Reference to a CIDR block, IP address, gateway, instance or security group that is allowed to communicate
+            with the security group. If a security group is specified, all instances in that group are allowed.
+            If no sourceRef is specified, all traffic is allowed.
+          items:
+            $ref: '#/components/schemas/Reference'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '32'
+          example:
+            - provider: seca.network/v1
+              resource: security-groups/security-group-1
+      example:
+        annotations:
+          description: Allow incoming HTTP(s) traffic
+        direction: ingress
+        version: IPv4
+        protocol: tcp
+        ports:
+          list:
+            - 80
+            - 443
+        sourceRef:
+          - provider: seca.network/v1
+            resource: security-groups/frontend-sg
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/frontend-sg
+    SecurityGroupSpec:
+      type: object
+      description: Specification of the security group
+      properties:
+        rules:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 500
+          description: |
+            Network access rules defining communication between security groups and external networks.
+
+            Rule Evaluation:
+            - Default behavior is to deny all traffic not explicitly allowed
+            - Rules provide granular control over allowed traffic types, sources, and destinations
+          items:
+            $ref: '#/components/schemas/SecurityGroupRuleSpec'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '500'
+        ruleRefs:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 500
+          description: |
+            References to shared SecurityGroupRule resources.
+            These rules are applied in addition to the inline rules.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Reference'
+            description: Reference to a SecurityGroupRule resource.
+            example:
+              provider: seca.network/v1
+              resource: security-group-rules/rule-1
+              ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-group-rules/rule-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '500'
+    StorageSkuSpec:
+      type: object
+      description: |
+        Specification of the storage SKU, including its capabilities and extensions.
+      required:
+        - iops
+        - type
+        - minVolumeSize
+      properties:
+        iops:
+          type: integer
+          description: |
+            The number of IOPS (Input/Output Operations Per Second) guaranteed for
+            the storage SKU.
+          minimum: 1
+          maximum: 45000
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '45000'
+        type:
+          type: string
+          description: |
+            Type of storage SKU. Can be one of the following:
+
+            * `local-ephemeral`: Local storage is directly attached to the hypervisor
+              hosting the instance. In the event of a hypervisor failure or instance
+              restart, the data may either be lost or become unavailable. The failure
+              mode depends on the Cloud Service Provider (CSP).
+              Users of local storage should be aware of these risks and implement
+              a robust backup strategy or application level replication of the data.
+              Local storage is typically suited for high-performance workloads requiring
+              low latency and high throughput, where the application layer can handle
+              failures. It is not recommended for workloads demanding high availability
+              or data durability. Example use-cases include caching, temporary data
+              or immutable workloads such as operating system images without local data.
+            * `local-durable`: Local durable storage is similar to local storage
+              but is designed to provide data durability while providing high-performance.
+              It is typically implemented using a redundant storage device or
+              replicated storage solution. Local durable storage is suitable for
+              workloads requiring high performance and low latency, while also
+              ensuring data durability at the cost of availability. The time to
+              restore data may vary depending on the CSP and the
+              will be significantly higher then using `remote-durable` storage.
+              Example use-cases include replicated paxos or raft based databases or
+              replicated databases using synchronous replication, in addition to
+              file storage.
+            * `remote-durable`: Remote storage is a network-attached storage solution
+              designed to provide data redundancy and high availability. While
+              typically slower than local storage, remote storage offers the
+              advantage of being accessible by different hypervisors.
+              This means the storage can be used by different instances running
+              on separate hypervisors, but only one instance at a time. This
+              enabled the recreation of the instance with the same storage on a
+              different hypervisor and therefore greatly reduces the recovery
+              time in case of failure of the hypervisor. Remote storage cannot be
+              attached to multiple instances simultaneously.
+              Example use-cases include file storage or replicated databases
+              using asynchronous replication.
+          enum:
+            - local-ephemeral
+            - local-durable
+            - remote-durable
+          x-enumNames:
+            - StorageSkuTypeLocalEphemeral
+            - StorageSkuTypeLocalDurable
+            - StorageSkuTypeRemoteDurable
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: local-ephemeral;local-durable;remote-durable
+        minVolumeSize:
+          type: integer
+          description: |
+            Minimum volume size for guaranteed performance, in GB.
+          minimum: 1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+      example:
+        iops: 100
+        type: remote-durable
+        minVolumeSize: 50
+    SubnetSpec:
+      type: object
+      description: |
+        Detailed specification of the subnet. Automatic address
+        assignment is supported, similar to the network configuration. The
+        subnet's prefix length must be smaller than the network's prefix
+        length, ensuring proper subdivision of the address space.
+        The first and last IP addresses in the subnet are reserved
+        the network address and broadcast address, respectively.
+
+        Most CSP will not allow to use a different IPv6 prefix length than /64.
+      required:
+        - cidr
+        - zone
+        - routeTableRef
+      properties:
+        cidr:
+          $ref: '#/components/schemas/cidr'
+        zone:
+          allOf:
+            - $ref: '#/components/schemas/Zone'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '32'
+        routeTableRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the route table used for all NICs in this Subnet.
+          example:
+            resource: route-tables/route-table-1
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU used by default for all NICs in this Network.
+            Can be overridden by the NIC
+          example:
+            resource: tenants/seca/skus/1000
+      example:
+        cidr:
+          ipv4: 0.0.0.0/24
+          ipv6: '::/64'
+        zone: a
+        routeTableRef:
+          resource: route-tables/route-table-1
+        skuRef:
+          resource: tenants/seca/skus/1000
+    WorkspaceSpec:
+      type: object
+      description: |
+        Specification of the workspace, including its capabilities and extensions.
+      example: {}
+    RequestObject:
+      type: object
+      description: Request object
+      properties:
+        verb:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Verb that describes the action to be performed on the resource.
+            The verb can be one of the following: get, list, put, delete, post, ..
+          maxLength: 7
+          example: get
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '7'
+        body:
+          oneOf:
+            - $ref: '#/components/schemas/BlockStorageSpec'
+            - $ref: '#/components/schemas/InstanceSkuSpec'
+            - $ref: '#/components/schemas/InstanceSpec'
+            - $ref: '#/components/schemas/NetworkLoadBalancerSpec'
+            - $ref: '#/components/schemas/NetworkSkuSpec'
+            - $ref: '#/components/schemas/NetworkSpec'
+            - $ref: '#/components/schemas/NicSpec'
+            - $ref: '#/components/schemas/ObjectStorageAccountSpec'
+            - $ref: '#/components/schemas/PublicIpSpec'
+            - $ref: '#/components/schemas/RoleAssignmentSpec'
+            - $ref: '#/components/schemas/RoleSpec'
+            - $ref: '#/components/schemas/SecurityGroupSpec'
+            - $ref: '#/components/schemas/StorageSkuSpec'
+            - $ref: '#/components/schemas/SubnetSpec'
+            - $ref: '#/components/schemas/WorkspaceSpec'
+        resource:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          maxLength: 2000
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '2000'
+    ResponseObject:
+      type: object
+      description: Response object
+      properties:
+        code:
+          type: number
+          minimum: 100
+          maximum: 599
+          example: 202
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '100'
+            x-kubebuilder-validation-maximum: '599'
+    ActivityLogSpec:
+      type: object
+      description: Activity log specification
+      properties:
+        subject:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: User-JWT executing this query
+          maxLength: 256
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '256'
+        request:
+          $ref: '#/components/schemas/RequestObject'
+        response:
+          $ref: '#/components/schemas/ResponseObject'
+    ActivityLog:
+      type: object
+      description: Activity log resource
+      required:
+        - spec
+      properties:
+        metadata:
+          $ref: '#/components/schemas/RegionalWorkspaceResourceMetadata'
+        spec:
+          $ref: '#/components/schemas/ActivityLogSpec'
+    ResponseMetadata:
+      description: |
+        Metadata for response objects.
+      allOf:
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - type: object
+          readOnly: true
+          properties:
+            skipToken:
+              type: string
+              description: Opaque cursor to get the next page. Field is omitted when there are no more pages available.
+              maxLength: 5
+      example:
+        skipToken: 'false'
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ErrorSource:
+      type: object
+      description: An object containing references to the source of the error.
+      required:
+        - pointer
+        - parameter
+      properties:
+        pointer:
+          type: string
+          description: A JSON Pointer [RFC6901] to the associated entity in the request document.
+          minLength: 1
+          maxLength: 256
+        parameter:
+          type: string
+          description: A string indicating which URI query parameter caused the error.
+          minLength: 1
+          maxLength: 64
+    Error:
+      type: object
+      description: |
+        A detailed error response see https://datatracker.ietf.org/doc/html/rfc7807.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - sources
+      properties:
+        type:
+          type: string
+          description: The type of error, expressed as a URI.
+          minLength: 1
+          maxLength: 4000
+          example: https://httpstatuses.io/400
+        title:
+          type: string
+          description: |
+            A short, human-readable summary of the problem
+            type.  It SHOULD NOT change from occurrence to occurrence of the
+            problem, except for purposes of localization (e.g., using
+            proactive content negotiation; see [RFC7231], Section 3.4).
+          minLength: 1
+          maxLength: 1024
+        status:
+          type: number
+          description: |
+            The HTTP status type ([http://secapi.cloud/errors/-rfc7231], Section 6)
+            generated by the origin server for this occurrence of the problem.
+          minimum: 100
+          maximum: 599
+          example: 400
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          minLength: 1
+          maxLength: 32768
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+          minLength: 1
+          maxLength: 256
+        sources:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/ErrorSource'
+        meta:
+          type: object
+          description: A meta object containing non-standard meta-information about the error.
+    Error400:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 400 Bad Request error response
+      example:
+        status: 400
+        type: http://secapi.cloud/errors/invalid-request
+        title: Bad Request
+        detail: The request was invalid or cannot be served.
+        instance: /errors/400
+        sources: []
+    Error401:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 401 Unauthorized error response
+      example:
+        status: 401
+        type: http://secapi.cloud/errors/unauthorized
+        title: Unauthorized
+        detail: Authentication is required and has failed or has not been provided.
+        instance: /errors/401
+        sources: []
+    Error403:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 403 Forbidden error response
+      example:
+        status: 403
+        type: http://secapi.cloud/errors/forbidden
+        title: Forbidden
+        detail: The request was valid, but the server is refusing action.
+        instance: /errors/403
+        sources: []
+    Error500:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 500 Internal Server Error error response
+      example:
+        status: 500
+        type: http://secapi.cloud/errors/internal-server-error
+        title: Internal Server Error
+        detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+        instance: /errors/500
+        sources: []
+  parameters:
+    tenantPathParam:
+      name: tenant
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Tenant ID
+    workspacePathParam:
+      name: workspace
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Workspace name
+    labelSelector:
+      in: query
+      name: labels
+      description: |
+        Filter resources by their labels. Multiple filters are combined with comma.
+        Filter syntax:
+          - Equals: key=value
+          - Not equals: key!=value
+          - Wildcards: \*key\*=\*value\* - substring (contains) match on both key and value. Each `*` can appear at start, end or in the middle to mean "any characters". Example: \*env\*=\*prod\* matches a label key containing "env" whose value contains "prod".
+          - Numeric: key>value, key<value, key>=value, key<=value
+          - Namespaced key examples: 'monitoring:alert-level=high' or 'billing:team=platform'
+      required: false
+      schema:
+        type: string
+        example: cloud:region=us-east-1,billing:team=platform,tier!=dev
+    limitParam:
+      in: query
+      name: limit
+      description: Maximum number of resources to return in the response
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10000
+        default: 1000
+    skipTokenParam:
+      in: query
+      name: skipToken
+      description: Opaque cursor for pagination. Use the skipToken from the previous response to get the next page of results. Note that skipTokens do not guarantee consistency across pages if the underlying data changes between requests
+      required: false
+      schema:
+        type: string
+    acceptHeader:
+      in: header
+      name: Accept
+      schema:
+        type: string
+        default: application/json
+        example: application/json; deleted=true
+        enum:
+          - application/json
+          - application/json; deleted=true
+          - application/json; deleted=only
+        x-enumNames:
+          - AcceptHeaderJson
+          - AcceptHeaderJsonDeletedTrue
+          - AcceptHeaderJsonDeletedOnly
+      description: |
+        Controls whether deleted resources are included:
+        - `"application/json"`: Returns only non-deleted resources
+        - `"application/json; deleted=true"`: Returns both deleted and non-deleted resources
+        - `"application/json; deleted=only"`: Returns only deleted resources
+  responses:
+    Error400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+          example:
+            status: 400
+            type: http://secapi.cloud/errors/invalid-request
+            title: Bad Request
+            detail: The request was invalid or cannot be served.
+            instance: /errors/400
+            sources: []
+    Error401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+          example:
+            status: 401
+            type: http://secapi.cloud/errors/unauthorized
+            title: Unauthorized
+            detail: Authentication is required and has failed or has not been provided.
+            instance: /errors/401
+            sources: []
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+          example:
+            status: 403
+            type: http://secapi.cloud/errors/forbidden
+            title: Forbidden
+            detail: The request was valid, but the server is refusing action.
+            instance: /errors/403
+            sources: []
+    Error500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+          example:
+            status: 500
+            type: http://secapi.cloud/errors/internal-server-error
+            title: Internal Server Error
+            detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+            instance: /errors/500
+            sources: []

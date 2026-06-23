@@ -1,0 +1,1538 @@
+openapi: 3.0.3
+info:
+  title: Kubernetes
+  version: v1beta1
+  description: |
+    The Kubernetes API provides access to Kubernetes resources.
+    This API is part of the Sovereign European Cloud API.
+servers:
+  - url: https://demo.secapi.cloud/providers/seca.kubernetes
+    description: Path Schema
+  - url: https://kubernetes.seca.demo.secapi.cloud
+    description: DNS Schema
+security:
+  - bearerAuth: []
+tags:
+  - name: Cluster
+    description: Cluster management
+  - name: Node-Pool
+    description: Node-Pool management
+paths:
+  /v1beta1/tenants/{tenant}/workspaces/{workspace}/clusters:
+    get:
+      tags:
+        - Cluster
+      security:
+        - bearerAuth: []
+      summary: List clusters
+      description: |
+        Lists clusters and provides paginated, filtered access.
+      operationId: listClusters
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/labelSelector'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/skipTokenParam'
+        - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterIterator'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1beta1/tenants/{tenant}/workspaces/{workspace}/clusters/{name}:
+    get:
+      tags:
+        - Cluster
+      security:
+        - bearerAuth: []
+      summary: Get cluster
+      description: |
+        Get a specific cluster, useful for polling status updates of resources.
+        A `404` response without proper schema has to be ignored and must be
+        understood as server being unavailable. Only a response with proper schema
+        can be trusted.
+      operationId: getCluster
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesCluster'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Cluster
+      security:
+        - bearerAuth: []
+      summary: Create or update cluster
+      description: |
+        Creates or updates a cluster. The return code of the endpoint
+        provides indicates if the resource was created or updated. A client
+        must accept both as successful response to the request.
+      operationId: createOrUpdateCluster
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      requestBody:
+        description: |
+          Any provided `metadata` on the cluster will be ignored by the resource server.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KubernetesCluster'
+      responses:
+        '200':
+          description: |
+            Cluster successfully updated, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesCluster'
+        '201':
+          description: |
+            Cluster successfully created, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesCluster'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Cluster
+      security:
+        - bearerAuth: []
+      summary: Delete cluster
+      description: |
+        Deletes a cluster using the given name. In case the resource workspace
+        already deleted `404` is returned. For failure tolerance in case of retry the
+        client needs to accept `404` and `202` as a successful deletion. In case the
+        client tries to delete a resource for the first time and gets a `404`, the
+        resource might not exist for other reasons or never existed in the first 
+        place. This can't be assumed as a safe deletion of the resource. 
+        If deletion of the resource takes longer deletion can be 
+        issued multiple times with the same result `202`, in all cased the resource
+        will be only deleted once. A client must verify the client response to contain
+        a proper error schema. A `404` response without proper schema has to be ignored
+        and understood as server unavailable error.
+      operationId: deleteCluster
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: Cluster deletion accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1beta1/tenants/{tenant}/workspaces/{workspace}/clusters/{cluster}/node-pools:
+    get:
+      tags:
+        - Node-Pool
+      security:
+        - bearerAuth: []
+      summary: List node-pools
+      description: |
+        Lists node-pools and provides paginated, filtered access.
+      operationId: listNode-Pools
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/clusterPathParam'
+        - $ref: '#/components/parameters/labelSelector'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/skipTokenParam'
+        - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node-PoolIterator'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /v1beta1/tenants/{tenant}/workspaces/{workspace}/clusters/{cluster}/node-pools/{name}:
+    get:
+      tags:
+        - Node-Pool
+      security:
+        - bearerAuth: []
+      summary: Get node-pool
+      description: |
+        Get a specific node-pool, useful for polling status updates of resources.
+        A `404` response without proper schema has to be ignored and must be
+        understood as server being unavailable. Only a response with proper schema
+        can be trusted.
+      operationId: getNode-Pool
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/clusterPathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesNodePool'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      tags:
+        - Node-Pool
+      security:
+        - bearerAuth: []
+      summary: Create or update node-pool
+      description: |
+        Creates or updates a node-pool. The return code of the endpoint
+        provides indicates if the resource was created or updated. A client
+        must accept both as successful response to the request.
+      operationId: createOrUpdateNode-Pool
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/clusterPathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      requestBody:
+        description: |
+          Any provided `metadata` on the node-pool will be ignored by the resource server.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KubernetesNodePool'
+      responses:
+        '200':
+          description: |
+            Node-Pool successfully updated, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesNodePool'
+        '201':
+          description: |
+            Node-Pool successfully created, doesn't indicate successful
+            resource provisioning.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesNodePool'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      tags:
+        - Node-Pool
+      security:
+        - bearerAuth: []
+      summary: Delete node-pool
+      description: |
+        Deletes a node-pool using the given name. In case the resource workspace
+        already deleted `404` is returned. For failure tolerance in case of retry the
+        client needs to accept `404` and `202` as a successful deletion. In case the
+        client tries to delete a resource for the first time and gets a `404`, the
+        resource might not exist for other reasons or never existed in the first 
+        place. This can't be assumed as a safe deletion of the resource. 
+        If deletion of the resource takes longer deletion can be 
+        issued multiple times with the same result `202`, in all cased the resource
+        will be only deleted once. A client must verify the client response to contain
+        a proper error schema. A `404` response without proper schema has to be ignored
+        and understood as server unavailable error.
+      operationId: deleteNode-Pool
+      parameters:
+        - $ref: '#/components/parameters/tenantPathParam'
+        - $ref: '#/components/parameters/workspacePathParam'
+        - $ref: '#/components/parameters/clusterPathParam'
+        - $ref: '#/components/parameters/resourcePathParam'
+        - $ref: '#/components/parameters/ifUnmodifiedSince'
+      responses:
+        '202':
+          description: Node-Pool deletion accepted
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '500':
+          $ref: '#/components/responses/Error500'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Use a JWT token for authentication. The token identifies the user,
+        and policies (RBAC, ABAC, or hybrid) determine authorization.
+  schemas:
+    ClusterIterator:
+      description: Iterator for clusters
+      type: object
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          description: List of clusters
+          type: array
+          items:
+            $ref: '#/components/schemas/KubernetesCluster'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    Node-PoolIterator:
+      description: Iterator for node-pools
+      type: object
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          description: List of node-pools
+          type: array
+          items:
+            $ref: '#/components/schemas/KubernetesNodePool'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    Labels:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to
+        organize and categorize resources. They can be used to filter resources.
+        The number of labels is eventually limited by the CSP.
+      additionalProperties:
+        type: string
+        maxLength: 63
+      example:
+        env: production
+    Annotations:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to add annotations.
+        The number of annotations is eventually limited by the CSP.
+      additionalProperties:
+        type: string
+        maxLength: 1024
+      example:
+        description: Human readable description
+    Extensions:
+      x-go-type-skip-optional-pointer: true
+      type: object
+      description: |
+        User-defined key/value pairs that are mutable and can be used to add extensions.
+        Extensions are subject to validation by the CSP, and any value that is not accepted will be rejected during admission.
+      additionalProperties:
+        type: string
+    UserResourceMetadata:
+      type: object
+      description: Metadata for user-defined resource properties
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        annotations:
+          $ref: '#/components/schemas/Annotations'
+        extensions:
+          $ref: '#/components/schemas/Extensions'
+    NameMetadata:
+      type: object
+      readOnly: true
+      required:
+        - name
+      description: Metadata for resource names
+      properties:
+        name:
+          type: string
+          description: |
+            Resource identifier in dash-case (kebab-case) format. Must start and end with an alphanumeric character.
+            Can contain lowercase letters, numbers, and hyphens. Multiple segments can be joined with dots.
+            Each segment follows the same rules.
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+          example: resource-name
+    PermissionMetadata:
+      type: object
+      readOnly: true
+      description: Metadata for permission management
+      required:
+        - provider
+        - resource
+        - verb
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: seca.compute/v1
+        resource:
+          type: string
+          minLength: 1
+          maxLength: 256
+          example: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb:
+          type: string
+          minLength: 1
+          maxLength: 7
+          example: get
+      example:
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ModificationMetadata:
+      type: object
+      readOnly: true
+      description: Base metadata for all resources with optional region references
+      required:
+        - createdAt
+        - lastModifiedAt
+        - resourceVersion
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created. The field is set by the provider and should not be modified by the user.
+        deletedAt:
+          type: string
+          format: date-time
+          description: If set, indicates the time when the resource was marked for deletion. Resources with this field set are considered pending deletion.
+        lastModifiedAt:
+          type: string
+          format: date-time
+          description: Indicates the time when the resource was created or last modified. Field is used for "If-Unmodified-Since" logic for concurrency control. The provider guarantees that a modification on a single resource can happen only once every millisecond.
+        resourceVersion:
+          type: integer
+          description: Incremented on every modification of the resource. Used for optimistic concurrency control.
+          minimum: 1
+          format: int64
+    ReferenceURN:
+      type: string
+      minLength: 1
+      description: |
+        A unique resource name (URN) used to identify and reference this resource.
+
+        The URN is NOT a URL — it does not contain a protocol scheme (http/https), a host,
+        or any endpoint-specific prefix. It is a portable, transport-agnostic identifier.
+        A configured SDK client — which knows the provider's base URL and endpoint mapping —
+        can derive a URL from a URN, but the URN alone cannot be turned into a URL without
+        that SDK configuration context. This separation keeps the URN portable across
+        environments and CSP deployments.
+
+        The full URN format is:
+          `{provider}/{version}/tenants/{tenant}/workspaces/{workspace}/{type}/{name}`
+
+        For hierarchical (nested) resources, additional parent path segments are included:
+          `seca.network/v1/tenants/tn-1/workspaces/ws-1/networks/my-net/route-tables/my-rt`
+
+        ### Automatic Prefix Inference
+
+        In most cases, the prefix of the URN can be automatically derived in the given context.
+        To simplify usage, only the resource type and name might be specified as a reference
+        using the `<type>/<name>` notation. The suffix can be made more specific by adding
+        additional segments separated by slashes.
+
+        The prefix is automatically inferred from the context. For example, if the resource is a
+        block storage in the same workspace the reference can be specified as
+        `block-storages/my-block-storage`. If the resource is a block storage in a different workspace, the
+        reference can be specified as `workspaces/ws-1/block-storages/my-block-storage`.
+
+        For automatic prefix inference, the following rules apply:
+        - the version is inferred from the current resource version
+        - the workspace is inferred from the current workspace
+        - the region is inferred from the current region
+        - the provider is inferred from the type and context of the usage
+
+        The prefix inference is resolved on admission into the full URN format, which makes it
+        mostly suitable for human use.
+      maxLength: 255
+      example: seca.compute/v1/tenants/tn-1/workspaces/ws-1/instances/my-server
+    TypeMetadata:
+      type: object
+      readOnly: true
+      required:
+        - apiVersion
+        - kind
+        - ref
+      description: |
+        Metadata for all resources with type information.
+      properties:
+        apiVersion:
+          type: string
+          description: API version of the resource
+          minLength: 1
+          maxLength: 16
+          default: v1
+        kind:
+          type: string
+          description: Type of the resource
+          enum:
+            - activity-log
+            - block-storage
+            - image
+            - instance
+            - instance-sku
+            - internet-gateway
+            - network
+            - network-load-balancer
+            - network-sku
+            - nic
+            - object-storage-account
+            - public-ip
+            - region
+            - role
+            - role-assignment
+            - routing-table
+            - security-group
+            - security-group-rule
+            - storage-sku
+            - subnet
+            - workspace
+          x-enumNames:
+            - ResourceKindActivityLog
+            - ResourceKindBlockStorage
+            - ResourceKindImage
+            - ResourceKindInstance
+            - ResourceKindInstanceSku
+            - ResourceKindInternetGateway
+            - ResourceKindNetwork
+            - ResourceKindNetworkLoadBalancer
+            - ResourceKindNetworkSku
+            - ResourceKindNic
+            - ResourceKindObjectStorageAccount
+            - ResourceKindPublicIP
+            - ResourceKindRegion
+            - ResourceKindRole
+            - ResourceKindRoleAssignment
+            - ResourceKindRoutingTable
+            - ResourceKindSecurityGroup
+            - ResourceKindSecurityGroupRule
+            - ResourceKindStorageSku
+            - ResourceKindSubnet
+            - ResourceKindWorkspace
+        ref:
+          $ref: '#/components/schemas/ReferenceURN'
+    TenantMetadata:
+      type: object
+      description: Metadata for resources with tenant constraints
+      readOnly: true
+      required:
+        - tenant
+      properties:
+        tenant:
+          type: string
+          description: Tenant identifier
+          minLength: 1
+          maxLength: 64
+    WorkspaceMetadata:
+      type: object
+      description: Metadata for resources with workspace constraints
+      readOnly: true
+      required:
+        - workspace
+      properties:
+        workspace:
+          type: string
+          description: Workspace identifier
+          minLength: 1
+          maxLength: 64
+    RegionalMetadata:
+      type: object
+      description: Metadata for regional resources
+      readOnly: true
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          description: Reference to the region where the resource is located
+          minLength: 1
+          maxLength: 64
+          example: eu-central-1
+    RegionalWorkspaceResourceMetadata:
+      description: |
+        Metadata for regional resources with name, permission, modification, type, tenant and workspace and region information.
+      allOf:
+        - $ref: '#/components/schemas/NameMetadata'
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - $ref: '#/components/schemas/ModificationMetadata'
+        - $ref: '#/components/schemas/TypeMetadata'
+        - $ref: '#/components/schemas/TenantMetadata'
+        - $ref: '#/components/schemas/WorkspaceMetadata'
+        - $ref: '#/components/schemas/RegionalMetadata'
+    Reference:
+      type: object
+      description: |
+        A reference to a resource using an object. The object contains the
+        same information as the ReferenceURN, but is represented as a structured object.
+        The advantage of this representation is that it can be used to reference
+        resources in different workspaces or regions without the need to specify
+        the full URN.
+      required:
+        - resource
+      properties:
+        region:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Region of the resource. If not set, the region is inferred from the context.
+          maxLength: 64
+          example: eu-central-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        provider:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Provider of the resource. If not set, the provider is inferred from the context.
+          maxLength: 64
+          example: seca.compute/v1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        tenant:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Tenant of the resource. If not set, the tenant is inferred from the context.
+          maxLength: 64
+          example: tenant-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        workspace:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Workspace of the resource. If not set, the workspace is inferred from the context.
+          maxLength: 64
+          example: workspace-1
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '64'
+        resource:
+          type: string
+          description: |
+            Resource-specific path identifying the resource within its workspace context.
+            This is the segment of the full URN after the provider, version, tenant, and
+            workspace parts. For a flat resource it is `<type>/<name>`, and for hierarchical
+            (nested) resources it includes the parent path segments:
+              `networks/<network-name>/route-tables/<rt-name>`
+            The provider, tenant, and workspace can be specified as separate fields in this
+            object; they do not need to be repeated here.
+          minLength: 1
+          maxLength: 256
+          example: instances/my-server
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '256'
+    KubernetesClusterSpec:
+      type: object
+      description: |
+        Specification of the  kubernetes cluster, including its configuration
+        and network settings.
+
+        Changing the sku of the cluster will cause the cluster to be recreated.
+      required:
+        - skuRef
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the Kubernetes cluster. The SKU is immutable after the cluster is created.
+            To change the SKU, the cluster must be deleted and recreated with the new SKU reference.
+          example:
+            resource: tenants/seca/skus/xl
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: spec.skuRef is immutable
+        restrictKubernetesApi:
+          description: |
+            Restrict access to the Kubernetes API to specific IP addresses or ranges.
+            This is a security feature to limit access to the cluster. If not specified,
+            the Kubernetes API is accessible from any IP address. Nodes that are
+            part of the cluster are always allowed to access the Kubernetes API.
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 100
+          items:
+            type: string
+            description: |
+              IP address or CIDR range to restrict access to the Kubernetes API.
+              The IP address or CIDR can be for IPv4 or IPv6.
+            maxLength: 45
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-items-max-length: '45'
+            x-kubebuilder-validation-max-items: '100'
+          example:
+            - 1.2.3.4/32
+            - 2002::1234:abcd:ffff:c0a8:101/64
+            - 1.2.3.4
+            - 2002::1234:abcd:ffff:c0a8:101
+        podCidr:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            CIDR range for the pod network. This is used to allocate IP addresses
+            for pods in the cluster. The CIDR must be a valid IPv4 or IPv6 CIDR.
+            If not specified, a default provider CIDR will be used.
+          example: 192.168.0.0/24
+        serviceCidr:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            CIDR range for the service network. This is used to allocate IP addresses
+            for services in the cluster. The CIDR must be a valid IPv4 or IPv6 CIDR.
+            If not specified, a default provider CIDR will be used.
+          example: 100.64.0.0/18
+    ResourceState:
+      type: string
+      description: |
+        Current phase of the resource:
+        - pending: not available, waiting for other resources
+        - creating: not available, creation started
+        - active: available for data layer usage
+        - updating: available for data layer usage
+        - deleting: maybe still available for data layer user, can fail any moment
+        - error: failed to fulfill the request; would be related to provider issue or customer related input.
+      enum:
+        - pending
+        - creating
+        - active
+        - updating
+        - deleting
+        - error
+      x-enumNames:
+        - ResourceStatePending
+        - ResourceStateCreating
+        - ResourceStateActive
+        - ResourceStateUpdating
+        - ResourceStateDeleting
+        - ResourceStateError
+      example: active
+    StatusCondition:
+      type: object
+      description: |
+        StatusCondition describes the state of a resource at a certain point.
+        Conditions are provider-specific and can represent different states depending on the
+        resource type and provider implementation.
+      required:
+        - state
+        - lastTransitionAt
+      properties:
+        state:
+          $ref: '#/components/schemas/ResourceState'
+        lastTransitionAt:
+          type: string
+          format: date-time
+          description: |
+            LastTransitionAt is the last time the condition transitioned from one
+            status to another. This should be when the underlying condition changed.
+            If that is not known, then using the time when the API field changed is
+            acceptable.
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            Type of condition. The condition type is provider-specific and should
+            reflect the specific states relevant to your resource.
+        reason:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            The reason for the condition's last transition in CamelCase.
+            The specific set of reason values is provider-specific and should be
+            documented by the provider.
+          maxLength: 1024
+          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '1024'
+            x-kubebuilder-validation-pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+        message:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          description: |
+            A human-readable message indicating details about the transition.
+          maxLength: 32768
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-length: '32768'
+      example:
+        state: active
+        lastTransitionAt: '2024-11-21T14:39:22Z'
+    Status:
+      type: object
+      readOnly: true
+      description: Current status of the resource
+      required:
+        - conditions
+      properties:
+        state:
+          x-go-type-skip-optional-pointer: true
+          allOf:
+            - $ref: '#/components/schemas/ResourceState'
+        conditions:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/StatusCondition'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '32'
+    KubernetesClusterStatus:
+      description: |
+        Represents the status of the  kubernetes cluster.
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          readOnly: true
+          properties:
+            kubeConfig:
+              type: string
+              x-go-type-skip-optional-pointer: true
+              description: |
+                The kube config file for the cluster. This file is used to configure
+                access to the cluster using kubectl or other Kubernetes clients.
+              maxLength: 65536
+              example: |-
+                ---
+                ...
+              x-oapi-codegen-extra-tags:
+                x-kubebuilder-validation-max-length: '65536'
+    KubernetesCluster:
+      description: |
+        Represents a kubernetes cluster resource. A cluster is
+        accessible from the internet and can be used to deploy applications
+        that require external access.
+      allOf:
+        - $ref: '#/components/schemas/UserResourceMetadata'
+        - type: object
+          required:
+            - spec
+          properties:
+            metadata:
+              $ref: '#/components/schemas/RegionalWorkspaceResourceMetadata'
+            spec:
+              $ref: '#/components/schemas/KubernetesClusterSpec'
+            status:
+              $ref: '#/components/schemas/KubernetesClusterStatus'
+    ResponseMetadata:
+      description: |
+        Metadata for response objects.
+      allOf:
+        - $ref: '#/components/schemas/PermissionMetadata'
+        - type: object
+          readOnly: true
+          properties:
+            skipToken:
+              type: string
+              description: Opaque cursor to get the next page. Field is omitted when there are no more pages available.
+              maxLength: 5
+      example:
+        skipToken: 'false'
+        provider: seca.compute/v1
+        resource: tenants/tn-1/workspaces/ws-1/instances/my-server
+        verb: get
+    ErrorSource:
+      type: object
+      description: An object containing references to the source of the error.
+      required:
+        - pointer
+        - parameter
+      properties:
+        pointer:
+          type: string
+          description: A JSON Pointer [RFC6901] to the associated entity in the request document.
+          minLength: 1
+          maxLength: 256
+        parameter:
+          type: string
+          description: A string indicating which URI query parameter caused the error.
+          minLength: 1
+          maxLength: 64
+    Error:
+      type: object
+      description: |
+        A detailed error response see https://datatracker.ietf.org/doc/html/rfc7807.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - sources
+      properties:
+        type:
+          type: string
+          description: The type of error, expressed as a URI.
+          minLength: 1
+          maxLength: 4000
+          example: https://httpstatuses.io/400
+        title:
+          type: string
+          description: |
+            A short, human-readable summary of the problem
+            type.  It SHOULD NOT change from occurrence to occurrence of the
+            problem, except for purposes of localization (e.g., using
+            proactive content negotiation; see [RFC7231], Section 3.4).
+          minLength: 1
+          maxLength: 1024
+        status:
+          type: number
+          description: |
+            The HTTP status type ([http://secapi.cloud/errors/-rfc7231], Section 6)
+            generated by the origin server for this occurrence of the problem.
+          minimum: 100
+          maximum: 599
+          example: 400
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          minLength: 1
+          maxLength: 32768
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+          minLength: 1
+          maxLength: 256
+        sources:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/ErrorSource'
+        meta:
+          type: object
+          description: A meta object containing non-standard meta-information about the error.
+    Error400:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 400 Bad Request error response
+      example:
+        status: 400
+        type: http://secapi.cloud/errors/invalid-request
+        title: Bad Request
+        detail: The request was invalid or cannot be served.
+        instance: /errors/400
+        sources: []
+    Error401:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 401 Unauthorized error response
+      example:
+        status: 401
+        type: http://secapi.cloud/errors/unauthorized
+        title: Unauthorized
+        detail: Authentication is required and has failed or has not been provided.
+        instance: /errors/401
+        sources: []
+    Error403:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 403 Forbidden error response
+      example:
+        status: 403
+        type: http://secapi.cloud/errors/forbidden
+        title: Forbidden
+        detail: The request was valid, but the server is refusing action.
+        instance: /errors/403
+        sources: []
+    Error500:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 500 Internal Server Error error response
+      example:
+        status: 500
+        type: http://secapi.cloud/errors/internal-server-error
+        title: Internal Server Error
+        detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+        instance: /errors/500
+        sources: []
+    Error404:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 404 Not Found error response
+      example:
+        status: 404
+        type: http://secapi.cloud/errors/resource-not-found
+        title: Not Found
+        detail: The requested resource could not be found.
+        instance: /errors/404
+        sources: []
+    Error409:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 409 Conflict error response
+      example:
+        status: 409
+        type: http://secapi.cloud/errors/resource-conflict
+        title: Conflict
+        detail: The request could not be completed due to a conflict with the current state of the resource.
+        instance: /errors/409
+        sources: []
+    Error412:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 412 Precondition Failed error response
+      example:
+        status: 412
+        type: http://secapi.cloud/errors/precondition-failed
+        title: Precondition Failed
+        detail: The precondition given in the If-Match header failed.
+        instance: /errors/412
+        sources: []
+    Error422:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      description: A 422 Unprocessable Entity error response
+      example:
+        status: 422
+        type: http://secapi.cloud/errors/validation-error
+        title: Unprocessable Entity
+        detail: The request was well-formed but was unable to be followed due to semantic errors.
+        sources:
+          - pointer: /data/attributes/username
+            parameter: username
+        instance: /errors/422
+    Zone:
+      type: string
+      description: Reference to a specific zone within a region
+      minLength: 1
+      maxLength: 32
+      example: a
+    KubernetesNodeRootVolume:
+      type: object
+      description: |
+        Root volume for the node. The root volume is used to store the operating
+        system and other software required to run the node.
+
+        The SKU must be one of the available block storage SKUs in the region.
+      required:
+        - skuRef
+        - sizeGB
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the block storage created to store the root volume.
+            The SKU is immutable after the node pool is created. To change the SKU,
+            the node pool must be deleted and recreated with the new SKU reference.
+          example:
+            provider: seca.storage/v1
+            resource: tenats/seca/skus/le500
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: rootVolume.skuRef is immutable
+        sizeGB:
+          description: |
+            Size of the root volume in GB. The size is recommended to be at least 100GB.
+          type: integer
+          example: 100
+          minimum: 20
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '20'
+      example:
+        skuRef:
+          resource: tenants/seca/skus/le500
+        sizeGB: 100
+    KubernetesNodeTemplate:
+      type: object
+      description: |
+        Template for creating nodes in the node pool. The template includes
+        the instance SKU, subnet, and zone in which the nodes will be created.
+        The SKU must be one of the available compute SKUs in the region.
+      required:
+        - skuRef
+        - subnetRef
+        - zone
+        - rootVolume
+      properties:
+        skuRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: |
+            Reference to the SKU of the node instances. The SKU is immutable after the node pool is created.
+            To change the SKU, the node pool must be deleted and recreated with the new SKU reference.
+          example:
+            provider: seca.compute/v1
+            resource: tenants/seca/skus/xl
+            ref: seca.compute/v1/tenants/seca/skus/xl
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: nodeTemplate.skuRef is immutable
+        subnetRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the NIC attached to the node instances.
+          example:
+            provider: seca.network/v1
+            resource: subnets/k8s-nodes-a
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/subnets/k8s-nodes-a
+        zone:
+          allOf:
+            - $ref: '#/components/schemas/Zone'
+          description: |
+            The zone in which the node instances will be created. The zone is immutable after the node pool is created.
+            To change the zone, the node pool must be deleted and recreated with the new zone.
+          x-oapi-codegen-extra-tags:
+            x-cel-rule-0: self == oldSelf
+            x-cel-message-0: nodeTemplate.zone is immutable
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '32'
+        securityGroupRef:
+          allOf:
+            - $ref: '#/components/schemas/Reference'
+          description: Reference to the security group associated with the node instances.
+          example:
+            provider: seca.network/v1
+            resource: security-groups/k8s-nodes
+            ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/k8s-nodes
+        rootVolume:
+          $ref: '#/components/schemas/KubernetesNodeRootVolume'
+      example:
+        skuRef:
+          provider: seca.compute/v1
+          resource: tenants/seca/skus/xl
+          ref: seca.compute/v1/tenants/seca/skus/xl
+        subnetRef:
+          provider: seca.network/v1
+          resource: subnets/k8s-nodes-a
+          ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/subnets/k8s-nodes-a
+        zone: a
+        securityGroupRef:
+          provider: seca.network/v1
+          resource: security-groups/k8s-nodes
+          ref: seca.network/v1/tenants/tn-1/workspaces/ws-1/security-groups/k8s-nodes
+        rootVolume:
+          skuRef:
+            provider: seca.storage/v1
+            resource: tenants/seca/skus/le500
+            ref: seca.storage/v1/tenants/seca/skus/le500
+          sizeGB: 100
+    KubernetesNodeTaint:
+      type: object
+      description: |
+        Represents a taint applied to the nodes in the node pool. Taints are used
+        to control which pods can be scheduled on the nodes. A taint consists of a
+        key, value, and effect.
+      required:
+        - key
+        - value
+        - effect
+      properties:
+        key:
+          type: string
+          description: |
+            The key of the taint. The key is used to identify the taint and is used
+            in conjunction with the value and effect.
+          example: example-key
+          minLength: 1
+          maxLength: 63
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '63'
+        value:
+          type: string
+          description: |
+            The value of the taint. The value is used to identify the taint and is used
+            in conjunction with the key and effect.
+          example: example-value
+          minLength: 1
+          maxLength: 63
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-min-length: '1'
+            x-kubebuilder-validation-max-length: '63'
+        effect:
+          type: string
+          enum:
+            - NoSchedule
+            - PreferNoSchedule
+            - NoExecute
+          x-enumNames:
+            - KubernetesNodeTaintEffectNoSchedule
+            - KubernetesNodeTaintEffectPreferNoSchedule
+            - KubernetesNodeTaintEffectNoExecute
+          description: |
+            The effect of the taint. The effect determines how the taint is applied to
+            the nodes in the node pool. For details on the effects, see the
+            (kubernetes documentation on taints and tolerations)[https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/].
+          example: NoSchedule
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-enum: NoSchedule;PreferNoSchedule;NoExecute
+    KubernetesNodePoolSpec:
+      type: object
+      description: |
+        Specification of the  kubernetes node pool, including its configuration
+        and network settings. Since the node pool is, all nodes in the pool
+        have a IP address and are accessible from the internet.
+      required:
+        - instances
+        - nodeTemplate
+      properties:
+        instances:
+          description: |
+            The number of instances in the node pool. This field is required to
+            specify the number of nodes in the node pool.
+          type: integer
+          minimum: 1
+          maximum: 5000
+          example: 3
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-minimum: '1'
+            x-kubebuilder-validation-maximum: '5000'
+        nodeTemplate:
+          $ref: '#/components/schemas/KubernetesNodeTemplate'
+        taints:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          maxItems: 50
+          description: |
+            List of taints to apply to the nodes in the node pool. Taints are used
+            to mark nodes as unsuitable for certain workloads, allowing for more
+            fine-grained control over scheduling.
+          items:
+            $ref: '#/components/schemas/KubernetesNodeTaint'
+          x-oapi-codegen-extra-tags:
+            x-kubebuilder-validation-max-items: '50'
+    KubernetesNodePoolStatus:
+      description: |
+        Represents the status of the  kubernetes node pool. The status
+        represents if the instances of the node pool are provisioned to the
+        cluster.
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          readOnly: true
+          properties:
+            nodes:
+              description: |
+                List of nodes in the Node Pool. Each node is represented by its
+                reference to a compute instance.
+              type: array
+              x-go-type-skip-optional-pointer: true
+              maxItems: 1000
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Reference'
+                description: Reference to the compute instance representing the node.
+                example:
+                  provider: seca.compute/v1
+                  resource: instances/instance-123
+              x-oapi-codegen-extra-tags:
+                x-kubebuilder-validation-max-items: '1000'
+    KubernetesNodePool:
+      description: |
+        Represents a Node Pool resource in a Kubernetes cluster. A Node Pool is a group of
+        nodes with the same configuration, including instance SKU, network configuration,
+        and security group settings. Node Pools are used to manage the scaling and
+        lifecycle of nodes in a Kubernetes cluster.
+      allOf:
+        - $ref: '#/components/schemas/UserResourceMetadata'
+        - type: object
+          required:
+            - spec
+          properties:
+            metadata:
+              $ref: '#/components/schemas/RegionalWorkspaceResourceMetadata'
+            spec:
+              $ref: '#/components/schemas/KubernetesNodePoolSpec'
+            status:
+              $ref: '#/components/schemas/KubernetesNodePoolStatus'
+  parameters:
+    tenantPathParam:
+      name: tenant
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Tenant ID
+    workspacePathParam:
+      name: workspace
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Workspace name
+    labelSelector:
+      in: query
+      name: labels
+      description: |
+        Filter resources by their labels. Multiple filters are combined with comma.
+        Filter syntax:
+          - Equals: key=value
+          - Not equals: key!=value
+          - Wildcards: \*key\*=\*value\* - substring (contains) match on both key and value. Each `*` can appear at start, end or in the middle to mean "any characters". Example: \*env\*=\*prod\* matches a label key containing "env" whose value contains "prod".
+          - Numeric: key>value, key<value, key>=value, key<=value
+          - Namespaced key examples: 'monitoring:alert-level=high' or 'billing:team=platform'
+      required: false
+      schema:
+        type: string
+        example: cloud:region=us-east-1,billing:team=platform,tier!=dev
+    limitParam:
+      in: query
+      name: limit
+      description: Maximum number of resources to return in the response
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10000
+        default: 1000
+    skipTokenParam:
+      in: query
+      name: skipToken
+      description: Opaque cursor for pagination. Use the skipToken from the previous response to get the next page of results. Note that skipTokens do not guarantee consistency across pages if the underlying data changes between requests
+      required: false
+      schema:
+        type: string
+    acceptHeader:
+      in: header
+      name: Accept
+      schema:
+        type: string
+        default: application/json
+        example: application/json; deleted=true
+        enum:
+          - application/json
+          - application/json; deleted=true
+          - application/json; deleted=only
+        x-enumNames:
+          - AcceptHeaderJson
+          - AcceptHeaderJsonDeletedTrue
+          - AcceptHeaderJsonDeletedOnly
+      description: |
+        Controls whether deleted resources are included:
+        - `"application/json"`: Returns only non-deleted resources
+        - `"application/json; deleted=true"`: Returns both deleted and non-deleted resources
+        - `"application/json; deleted=only"`: Returns only deleted resources
+    resourcePathParam:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        minLength: 1
+        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+      description: Resource name
+    ifUnmodifiedSince:
+      in: header
+      name: if-unmodified-since
+      schema:
+        type: integer
+      required: false
+      description: |
+        Returns resources only if they have not been modified since the specified version.
+        Uses metadata.resourceVersion for comparison.
+    clusterPathParam:
+      name: cluster
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+      description: Cluster name
+  responses:
+    Error400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+          example:
+            status: 400
+            type: http://secapi.cloud/errors/invalid-request
+            title: Bad Request
+            detail: The request was invalid or cannot be served.
+            instance: /errors/400
+            sources: []
+    Error401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+          example:
+            status: 401
+            type: http://secapi.cloud/errors/unauthorized
+            title: Unauthorized
+            detail: Authentication is required and has failed or has not been provided.
+            instance: /errors/401
+            sources: []
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+          example:
+            status: 403
+            type: http://secapi.cloud/errors/forbidden
+            title: Forbidden
+            detail: The request was valid, but the server is refusing action.
+            instance: /errors/403
+            sources: []
+    Error500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+          example:
+            status: 500
+            type: http://secapi.cloud/errors/internal-server-error
+            title: Internal Server Error
+            detail: The server encountered an unexpected condition that prevented it from fulfilling the request.
+            instance: /errors/500
+            sources: []
+    Error404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+          example:
+            status: 404
+            type: http://secapi.cloud/errors/resource-not-found
+            title: Not Found
+            detail: The requested resource could not be found.
+            instance: /errors/404
+            sources: []
+    Error409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error409'
+          example:
+            status: 409
+            type: http://secapi.cloud/errors/resource-conflict
+            title: Conflict
+            detail: The request could not be completed due to a conflict with the current state of the resource.
+            instance: /errors/409
+            sources: []
+    Error412:
+      description: Precondition Failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error412'
+          example:
+            status: 412
+            type: http://secapi.cloud/errors/precondition-failed
+            title: Precondition Failed
+            detail: The precondition given in the If-Match header failed.
+            instance: /errors/412
+            sources: []
+    Error422:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error422'
+          example:
+            status: 422
+            type: http://secapi.cloud/errors/validation-error
+            title: Unprocessable Entity
+            detail: The subnetRef is not correctly formatted.
+            sources:
+              - pointer: /spec/subnetRef
+                parameter: subnet
+            instance: /errors/422

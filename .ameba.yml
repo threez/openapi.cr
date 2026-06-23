@@ -1,0 +1,15 @@
+Excluded:
+  - spec/integration/generated
+  - spec/integration/gen_*.cr
+  - spec/integration/regen_*.cr
+  - spec/tmp
+
+Naming/BlockParameterName:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Lint/NotNil:
+  Excluded:
+    - spec/**/*.cr
