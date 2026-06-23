@@ -167,9 +167,20 @@ The CLI exposes `--custom-scalar` as a convenience for `format_type_for` overrid
 
 Scalar types are mapped from OpenAPI `type`+`format` pairs to Crystal types. The defaults cover all standard JSON Schema formats:
 
-- `string` → `String`; `date-time` / `date` → `Time`; `uuid` → `UUID`; `uri` / `uri-reference` → `URI`; `byte` → `Bytes`; `binary` → `IO`
-- `integer` → `Int32`; `int64` / `unix-time` → `Int64`; `uint64` → `UInt64`
-- `number` → `Float64`; `float` → `Float32`
+- `string`
+  - _(no format)_ → `String`
+  - `date-time`, `date` → `Time`
+  - `uuid` → `UUID`
+  - `uri`, `uri-reference` → `URI`
+  - `byte` → `Bytes`
+  - `binary` → `IO`
+- `integer`
+  - _(no format)_ → `Int32`
+  - `int64`, `unix-time` → `Int64`
+  - `uint64` → `UInt64`
+- `number`
+  - _(no format)_ → `Float64`
+  - `float` → `Float32`
 - `boolean` → `Bool`
 
 Use `--custom-scalar` (CLI) or `format_type_for` (Hooks) to add or override any mapping.
