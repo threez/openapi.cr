@@ -1,0 +1,52 @@
+name: Deploy docs to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: 1.20.2
+
+      - name: Cache shards
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: ${{ runner.os }}-shards-${{ hashFiles('shard.lock') }}
+          restore-keys: ${{ runner.os }}-shards-
+
+      - run: shards install
+
+      - name: Generate docs
+        run: make docs
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
