@@ -108,7 +108,8 @@ module OpenAPI
         return 1
       end
 
-      ns = namespace || derive_namespace(spec_files.first)
+      _ns = namespace
+      ns = _ns || derive_namespace(spec_files.first)
       docs = spec_files.map { |f| Model::Document.from_file(f) }
       doc = docs.size == 1 ? docs.first : Model::Document.merge(docs)
       Dir.mkdir_p(output_dir)
