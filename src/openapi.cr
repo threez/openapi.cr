@@ -19,5 +19,5 @@ require "./openapi/generator"
 # - `OpenAPI::Validation` and server helpers — runtime support for generated code.
 module OpenAPI
   # Library version.
-  VERSION = "0.1.1"
+  VERSION = "0.1.2"
 end

@@ -1,3 +1,4 @@
+require "../openapi"
 require "option_parser"
 require "./macro/enum"
 require "./validation/error"
