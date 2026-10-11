@@ -147,7 +147,7 @@ describe OpenAPI::XML::Serializable do
     rt.i64.should eq(2_i64)
     rt.f32.should be_close(1.5_f32, 0.001)
     rt.f64.should be_close(3.14, 0.001)
-    rt.flag?.should eq(true)
+    rt.flag?.should be_true
   end
 
   it "round-trips a struct with an optional field present" do

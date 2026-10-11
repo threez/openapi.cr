@@ -40,7 +40,7 @@ module OpenAPI
 
       # :nodoc:
       def self.merge(comps : Array(Components)) : Components?
-        return nil if comps.empty?
+        return if comps.empty?
         new(
           schemas: merge_hashes(comps.compact_map(&.schemas)),
           responses: merge_hashes(comps.compact_map(&.responses)),
@@ -55,7 +55,7 @@ module OpenAPI
       end
 
       private def self.merge_hashes(hashes : Array(Hash(String, V))) : Hash(String, V)? forall V
-        return nil if hashes.empty?
+        return if hashes.empty?
         result = {} of String => V
         hashes.each { |h| h.each { |k, v| result[k] = v unless result.has_key?(k) } }
         result.empty? ? nil : result

@@ -27,21 +27,21 @@ macro openapi_exception(name, json = true, yaml = false, xml = false, form = nil
     {% end %}
   {% end %}
 
-  class {{name.id}} < ::Exception
+  class {{ name.id }} < ::Exception
     struct Body
       {% if json %}include ::JSON::Serializable{% end %}
       {% if yaml %}include ::YAML::Serializable{% end %}
       {% if xml %}include ::OpenAPI::XML::Serializable{% end %}
-      {% if form %}include {{form.id}}{% end %}
+      {% if form %}include {{ form.id }}{% end %}
       {% if multipart %}include ::OpenAPI::Multipart::Serializable{% end %}
 
-      {{block.body}}
+      {{ block.body }}
     end
 
     getter body : Body
 
     def initialize(@body : Body)
-      {{has_message ? "super(@body.message)".id : "super()".id}}
+      {{ has_message ? "super(@body.message)".id : "super()".id }}
     end
 
     forward_missing_to @body

@@ -154,7 +154,6 @@ module OpenAPI
                         when :yaml_only then "\"application/yaml\""
                         when :xml_only  then "\"application/xml\""
                         when :multi     then "accept"
-                        else                 nil
                         end
 
           need_dynamic_headers = !header_params.empty? || !cookie_params.empty?
@@ -310,7 +309,7 @@ module OpenAPI
           response_obj = resp_or_ref.try(&.value)
           raw_headers = response_obj.try(&.headers) || {} of String => Model::OrRef(Model::Header)
           fields = raw_headers.compact_map do |name, h_or_ref|
-            header = h_or_ref.value || next nil
+            header = h_or_ref.value || next
             crystal_name = NameInflector.safe_identifier(NameInflector.snake_case(name))
             raw_expr = "response.headers[#{name.inspect}]?"
             parse_expr = header_parse_expr(header.schema, raw_expr)
@@ -362,7 +361,7 @@ module OpenAPI
           NameInflector.safe_identifier(NameInflector.snake_case(op_id))
         else
           parts = path_template.split("/").compact_map do |segment|
-            next nil if segment.empty?
+            next if segment.empty?
             if segment.starts_with?('{') && segment.ends_with?('}')
               "by_#{NameInflector.snake_case(segment[1..-2])}"
             else
@@ -412,9 +411,9 @@ module OpenAPI
       end
 
       private def resolve_response(or_ref : Model::OrRef(Model::Response)) : Model::Response?
-        or_ref.value || or_ref.ref.try { |r|
+        or_ref.value || or_ref.ref.try do |r|
           @doc.try(&.components).try(&.responses).try(&.[r.split("/").last]?).try(&.value)
-        }
+        end
       end
 
       private def resolve_client_error_clauses(
@@ -454,9 +453,9 @@ module OpenAPI
       end
 
       private def resolve_request_body_type(operation : Model::Operation, http_method : String, path_template : String) : String?
-        content = operation.request_body.try(&.value).try(&.content) || return nil
+        content = operation.request_body.try(&.value).try(&.content) || return
         return "IO::Memory" if content_mode(content) == :raw
-        key = pick_content_key(content) || return nil
+        key = pick_content_key(content) || return
         schema_or_ref = content[key]?.try(&.schema)
         if ref = schema_or_ref.try(&.ref)
           TypeMapper.ref_name(ref)
@@ -464,8 +463,6 @@ module OpenAPI
           NameInflector.operation_type_name(operation.operation_id, http_method, path_template) + "Request"
         elsif s = schema_or_ref.try(&.value)
           TypeMapper.crystal_type(s)
-        else
-          nil
         end
       end
 

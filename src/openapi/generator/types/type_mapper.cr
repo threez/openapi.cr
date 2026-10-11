@@ -95,15 +95,15 @@ module OpenAPI
         # Returns "Hash(String, T)" when the schema is a pure additionalProperties
         # map (no regular properties), nil otherwise.
         def self.additional_properties_hash_type(schema : Model::Schema) : String?
-          return nil unless schema.properties.nil? || schema.properties.try(&.empty?)
-          ap = schema.additional_properties || return nil
-          ap_schema = ap.schema || return nil
+          return unless schema.properties.nil? || schema.properties.try(&.empty?)
+          ap = schema.additional_properties || return
+          ap_schema = ap.schema || return
           val_type = if ref = ap_schema.ref
                        ref_name(ref)
                      elsif s = ap_schema.value
                        SCALAR_MAP[{s.type, s.format}]? || SCALAR_MAP[{s.type, nil}]? || "JSON::Any"
                      else
-                       return nil
+                       return
                      end
           "Hash(String, #{val_type})"
         end

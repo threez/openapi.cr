@@ -142,7 +142,7 @@ module OpenAPI
       private def resolve_path_item(item : PathItem) : PathItem?
         ref = item.ref || return item
         # External file refs are not supported (path-traversal / SSRF risk).
-        return nil unless ref.starts_with?("#/paths/")
+        return unless ref.starts_with?("#/paths/")
         # Decode RFC 6901 JSON Pointer escapes: ~1 → /, ~0 → ~
         key = ref[8..].gsub("~1", "/").gsub("~0", "~")
         paths.try(&.[key]?)

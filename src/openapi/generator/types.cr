@@ -36,14 +36,14 @@ module OpenAPI
           desc.each_line { |line| b.comment(line.chomp) }
           b.blank_comment
         end
-        b.scope("module #{ctx.namespace}") { |inner|
+        b.scope("module #{ctx.namespace}") do |inner|
           version = doc.info.version
           unless version.empty?
             inner.assign("VERSION", version.inspect)
             inner.blank
           end
           schemas.each { |cs| emitter.emit(cs, inner) }
-        }
+        end
 
         [GeneratedFile.new(ctx.output_path, b.to_s).format]
       end

@@ -366,7 +366,7 @@ describe "inline object properties" do
     ctx = OpenAPI::Generator::RenderContext.new(namespace: "T", output_path: "/dev/null")
     content = OpenAPI::Generator::TypesGenerator.new.generate(doc, ctx).first.content
     content.should contain("openapi_extensible_enum SizeUnit do")
-    content.should_not contain(%[TiB = new("TiB")])
+    content.should_not contain(%(TiB = new("TiB")))
     content.should contain("getter size_unit : SizeUnit?")
     content.should_not contain("getter size_unit : String")
   end

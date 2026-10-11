@@ -102,16 +102,16 @@ module OpenAPI
 
           wire_to_crystal = build_wire_map(values)
 
-          enum_descs = schema.x_enum_descriptions.try(&.as_h?).try { |h|
-            h.each_with_object({} of String => String) { |(k, v), m|
+          enum_descs = schema.x_enum_descriptions.try(&.as_h?).try do |h|
+            h.each_with_object({} of String => String) do |(k, v), m|
               m[k] = v.as_s? || ""
-            }
-          }
+            end
+          end
 
           emit_description(schema, b)
           extra = format_macro_args_inline
           header = extra.empty? ? "openapi_enum #{crystal_name} do" : "openapi_enum #{crystal_name}, #{extra} do"
-          b.scope(header) { |eb|
+          b.scope(header) do |eb|
             wire_to_crystal.each do |wire, cv|
               if (d = enum_descs.try(&.[wire]?)) && !d.empty?
                 emit_description(d, eb)
@@ -122,7 +122,7 @@ module OpenAPI
                 eb.line("#{cv} = #{wire}")
               end
             end
-          }
+          end
           b.blank
         end
 
@@ -132,23 +132,23 @@ module OpenAPI
 
           wire_to_crystal = build_wire_map(values)
 
-          enum_descs = schema.x_enum_descriptions.try(&.as_h?).try { |h|
-            h.each_with_object({} of String => String) { |(k, v), m|
+          enum_descs = schema.x_enum_descriptions.try(&.as_h?).try do |h|
+            h.each_with_object({} of String => String) do |(k, v), m|
               m[k] = v.as_s? || ""
-            }
-          }
+            end
+          end
 
           emit_description(schema, b)
           extra = format_macro_args_inline
           header = extra.empty? ? "openapi_extensible_enum #{crystal_name} do" : "openapi_extensible_enum #{crystal_name}, #{extra} do"
-          b.scope(header) { |eb|
+          b.scope(header) do |eb|
             wire_to_crystal.each do |wire, cv|
               if (d = enum_descs.try(&.[wire]?)) && !d.empty?
                 emit_description(d, eb)
               end
               eb.line(wire == cv ? cv : "#{cv} = #{wire.inspect}")
             end
-          }
+          end
           b.blank
         end
 
@@ -194,10 +194,10 @@ module OpenAPI
         end
 
         private def needs_validation_mixin?(props : Array(Tuple(String, Model::OrRef(Model::Schema), Bool))) : Bool
-          props.any? { |prop_name, or_ref, _|
+          props.any? do |prop_name, or_ref, _|
             s = or_ref.value || next false
             has_constraints?(s) && !(s.enum_values && inline_type(prop_name, or_ref))
-          }
+          end
         end
 
         private def emit_struct(name : String, schema : Model::Schema, b : Crystina::Builder) : Nil
@@ -206,7 +206,7 @@ module OpenAPI
           if @formats.includes?("xml") && (xml_name = schema.xml.try(&.name))
             b.annotate("OpenAPI::XML::Element", "name: #{xml_name.inspect}")
           end
-          b.scope("struct #{crystal_name}") { |sb|
+          b.scope("struct #{crystal_name}") do |sb|
             props = collect_properties(schema, nil)
             emit_format_includes(sb, props, has_binary_props?(props))
             sb.blank
@@ -215,7 +215,7 @@ module OpenAPI
             emit_initialize(props, sb)
             emit_validation_methods(props, sb)
             emit_strip_methods(props, sb)
-          }
+          end
           b.blank
         end
 
@@ -235,16 +235,16 @@ module OpenAPI
             props = collect_properties(schema, base_class)
             extra = format_macro_args_inline
             header = extra.empty? ? "openapi_exception #{crystal_name} do" : "openapi_exception #{crystal_name}, #{extra} do"
-            b.scope(header) { |eb|
+            b.scope(header) do |eb|
               emit_inline_classes(props, eb)
               emit_properties_from_list(props, eb)
               emit_initialize(props, eb)
               emit_validation_methods(props, eb)
-            }
+            end
             b.blank
           else
             klass_header = base_class ? "#{crystal_name} < #{base_class}" : crystal_name
-            b.scope("class #{klass_header}") { |kb|
+            b.scope("class #{klass_header}") do |kb|
               props = collect_properties(schema, base_class)
               # Error subclasses that inherit from a named exception type must not
               # include JSON::Serializable directly — JSON::Serializable picks up
@@ -261,7 +261,7 @@ module OpenAPI
               emit_initialize(props, kb) if base_class.nil?
               emit_validation_methods(props, kb)
               emit_strip_methods(props, kb)
-            }
+            end
             b.blank
           end
         end
@@ -293,9 +293,9 @@ module OpenAPI
           disc = schema.discriminator || return
 
           variants = [] of String
-          (schema.one_of || schema.any_of).try(&.each { |r|
+          (schema.one_of || schema.any_of).try(&.each do |r|
             r.ref.try { |ref| variants << TypeMapper.ref_name(ref) }
-          })
+          end)
 
           wire_to_type = if mapping = disc.mapping
                            mapping.map { |wire, ref_path| {wire, @hooks.crystal_name(TypeMapper.ref_name(ref_path))} }
@@ -352,9 +352,9 @@ module OpenAPI
         private def emit_union_alias(name : String, schema : Model::Schema, b : Crystina::Builder) : Nil
           crystal_name = @hooks.crystal_name(name)
           variants = [] of String
-          (schema.one_of || schema.any_of).try(&.each { |r|
+          (schema.one_of || schema.any_of).try(&.each do |r|
             r.ref.try { |ref| variants << TypeMapper.ref_name(ref) }
-          })
+          end)
           emit_description(schema, b)
           extra = format_macro_args
           if extra.empty?
@@ -414,9 +414,9 @@ module OpenAPI
           return if props.empty?
           required = props.select { |_, _, req| req }
           optional = props.reject { |_, _, req| req }
-          req_no_default, req_with_default = required.partition { |prop_name, or_ref, req|
+          req_no_default, req_with_default = required.partition do |prop_name, or_ref, req|
             resolve_type_and_default(or_ref, req, prop_name)[1].empty?
-          }
+          end
           all = req_no_default + req_with_default + optional
 
           params = {} of String => String
@@ -489,9 +489,9 @@ module OpenAPI
 
           emit_description(prop_schema.try(&.description), b)
 
-          ap_key_name = prop_schema.try { |s|
+          ap_key_name = prop_schema.try do |s|
             s.additional_properties.try(&.schema).try(&.value).try(&.x_additional_properties_name)
-          }
+          end
           b.comment("Keys: #{ap_key_name}") if ap_key_name
 
           if prop_schema.try(&.format) == "byte" && @formats.includes?("json")
@@ -568,17 +568,17 @@ module OpenAPI
         end
 
         private def resolve_base_class(schema : Model::Schema) : String?
-          all_of = schema.all_of || return nil
+          all_of = schema.all_of || return
           refs = all_of.select(&.ref?)
           inlines = all_of.reject(&.ref?)
-          return nil if refs.size != 1 || inlines.empty?
+          return if refs.size != 1 || inlines.empty?
           TypeMapper.ref_name(refs.first.ref || raise "ref expected")
         end
 
         private def resolve_composed_from(schema : Model::Schema) : Array(String)?
-          all_of = schema.all_of || return nil
+          all_of = schema.all_of || return
           refs = all_of.select(&.ref?)
-          return nil unless refs.size > 1
+          return unless refs.size > 1
           refs.map { |r| TypeMapper.ref_name(r.ref || raise "ref expected") }
         end
 
@@ -587,9 +587,9 @@ module OpenAPI
         end
 
         private def inline_type(prop_name : String?, or_ref : Model::OrRef(Model::Schema)) : String?
-          return nil unless prop_name
-          return nil if or_ref.ref?
-          schema = or_ref.value || return nil
+          return unless prop_name
+          return if or_ref.ref?
+          schema = or_ref.value || return
           nested_name = inline_class_name(prop_name)
           enum_vals = schema.enum_values.try(&.as_a?) || [] of JSON::Any
           if (schema.enum_values && !bool_enum?(enum_vals)) || schema.x_extensible_enum
@@ -597,9 +597,9 @@ module OpenAPI
           elsif (props = schema.properties) && !props.empty?
             nested_name
           elsif schema.type == "array"
-            items = schema.items || return nil
-            return nil if items.ref?
-            item_schema = items.value || return nil
+            items = schema.items || return
+            return if items.ref?
+            item_schema = items.value || return
             if item_schema.enum_values || item_schema.x_extensible_enum ||
                ((iprops = item_schema.properties) && !iprops.empty?)
               "Array(#{nested_name})"
@@ -641,7 +641,7 @@ module OpenAPI
 
         private def emit_nested_class(name : String, schema : Model::Schema, b : Crystina::Builder) : Nil
           emit_description(schema, b)
-          b.scope("class #{name}") { |kb|
+          b.scope("class #{name}") do |kb|
             nested_props = collect_properties(schema, nil)
             emit_format_includes(kb, nested_props, has_binary_props?(nested_props))
             kb.blank
@@ -649,7 +649,7 @@ module OpenAPI
             emit_properties_from_list(nested_props, kb)
             emit_initialize(nested_props, kb)
             emit_validation_methods(nested_props, kb)
-          }
+          end
           b.blank
         end
 
@@ -673,14 +673,14 @@ module OpenAPI
           props : Array(Tuple(String, Model::OrRef(Model::Schema), Bool)),
           b : Crystina::Builder,
         ) : Nil
-          constrained = props.select { |prop_name, or_ref, _|
+          constrained = props.select do |prop_name, or_ref, _|
             s = or_ref.value || next false
             has_constraints?(s) && !(s.enum_values && inline_type(prop_name, or_ref))
-          }
+          end
           return if constrained.empty?
 
           b.blank
-          b.def_method("valid?", {} of String => String, "Array(OpenAPI::Validation::Error)") { |mb|
+          b.def_method("valid?", {} of String => String, "Array(OpenAPI::Validation::Error)") do |mb|
             mb.assign("errors", "[] of OpenAPI::Validation::Error")
 
             constrained.each do |prop_name, or_ref, _|
@@ -735,12 +735,12 @@ module OpenAPI
             end
 
             mb.line("errors")
-          }
+          end
           b.blank
-          b.def_method("validate!", {} of String => String, "Nil") { |mb|
+          b.def_method("validate!", {} of String => String, "Nil") do |mb|
             mb.assign("errors", "valid?")
             mb.raise_ex_unless("OpenAPI::Validation::Exception.new(errors)", "errors.empty?")
-          }
+          end
         end
 
         private def emit_strip_methods(
@@ -753,17 +753,17 @@ module OpenAPI
           unless ro_props.empty?
             b.blank
             b.comment("Zeroes out read-only fields so client-supplied values are ignored on ingress.")
-            b.def_method("strip_read_only!", {} of String => String, "Nil") { |mb|
+            b.def_method("strip_read_only!", {} of String => String, "Nil") do |mb|
               ro_props.each { |prop_name, _, _| mb.line("@#{@hooks.property_name(prop_name)} = nil") }
-            }
+            end
           end
 
           unless wo_props.empty?
             b.blank
             b.comment("Zeroes out write-only fields so sensitive values are never serialized on egress.")
-            b.def_method("strip_write_only!", {} of String => String, "Nil") { |mb|
+            b.def_method("strip_write_only!", {} of String => String, "Nil") do |mb|
               wo_props.each { |prop_name, _, _| mb.line("@#{@hooks.property_name(prop_name)} = nil") }
-            }
+            end
           end
         end
       end
