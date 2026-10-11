@@ -2,23 +2,23 @@ require "../spec_helper"
 
 module ExceptionMacroSpec
   openapi_exception ApiError do
-    getter code : Int32     # ameba:disable Lint/UselessAssign
-    getter message : String # ameba:disable Lint/UselessAssign
+    getter code : Int32
+    getter message : String
 
     def initialize(@code : Int32, @message : String)
     end
   end
 
   openapi_exception CodeOnlyError do
-    getter code : Int32 # ameba:disable Lint/UselessAssign
+    getter code : Int32
 
     def initialize(@code : Int32)
     end
   end
 
   openapi_exception YamlError, yaml: true do
-    getter code : Int32     # ameba:disable Lint/UselessAssign
-    getter message : String # ameba:disable Lint/UselessAssign
+    getter code : Int32
+    getter message : String
 
     def initialize(@code : Int32, @message : String)
     end

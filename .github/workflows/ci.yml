@@ -25,6 +25,9 @@ jobs:
 
       - run: shards install
 
+      - name: Build ameba
+        run: cd lib/ameba && shards build ameba
+
       - name: Format check
         run: crystal tool format --check
 

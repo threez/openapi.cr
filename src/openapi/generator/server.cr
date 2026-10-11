@@ -419,7 +419,7 @@ module OpenAPI
           b.comment("* `#{crystal_name}` — #{param_constraint_summary(p.schema, required: p.required?)}", wrap: false)
         end
 
-        b.def_method("validate_#{mname}_params", params, "Array(OpenAPI::Validation::Error)") { |mb|
+        b.def_method("validate_#{mname}_params", params, "Array(OpenAPI::Validation::Error)") do |mb|
           mb.assign("errors", "[] of OpenAPI::Validation::Error")
           constrained_path_params.each do |p|
             crystal_name = NameInflector.safe_identifier(NameInflector.snake_case(p.name))
@@ -431,7 +431,7 @@ module OpenAPI
             emit_param_constraints(p.schema, p.name, crystal_name, p.required?, true, mb)
           end
           mb.line("errors")
-        }
+        end
       end
 
       private def param_constraint_summary(schema_or_ref : Model::OrRef(Model::Schema)?, required : Bool = false) : String
@@ -469,8 +469,8 @@ module OpenAPI
       end
 
       private def param_default_literal(schema_or_ref : Model::OrRef(Model::Schema)?) : String?
-        s = schema_or_ref.try(&.value) || return nil
-        raw = s.default || return nil
+        s = schema_or_ref.try(&.value) || return
+        raw = s.default || return
         case raw.raw
         when String  then raw.raw.as(String).inspect
         when Int64   then raw.raw.as(Int64).to_s
@@ -502,7 +502,7 @@ module OpenAPI
           NameInflector.safe_identifier(NameInflector.snake_case(op_id))
         else
           parts = path_template.split("/").compact_map do |segment|
-            next nil if segment.empty?
+            next if segment.empty?
             if segment.starts_with?('{') && segment.ends_with?('}')
               "by_#{NameInflector.snake_case(segment[1..-2])}"
             else
@@ -529,9 +529,9 @@ module OpenAPI
       end
 
       private def resolve_response(or_ref : Model::OrRef(Model::Response)) : Model::Response?
-        or_ref.value || or_ref.ref.try { |r|
+        or_ref.value || or_ref.ref.try do |r|
           @doc.try(&.components).try(&.responses).try(&.[r.split("/").last]?).try(&.value)
-        }
+        end
       end
 
       private def resolve_error_clauses(
@@ -574,9 +574,9 @@ module OpenAPI
       end
 
       private def resolve_request_body_type(operation : Model::Operation, http_method : String, path_template : String) : String?
-        content = operation.request_body.try(&.value).try(&.content) || return nil
+        content = operation.request_body.try(&.value).try(&.content) || return
         return "IO::Memory" if content_mode(content) == :raw
-        key = pick_content_key(content) || return nil
+        key = pick_content_key(content) || return
         schema_or_ref = content[key]?.try(&.schema)
         if ref = schema_or_ref.try(&.ref)
           TypeMapper.ref_name(ref)
@@ -584,8 +584,6 @@ module OpenAPI
           NameInflector.operation_type_name(operation.operation_id, http_method, path_template) + "Request"
         elsif s = schema_or_ref.try(&.value)
           TypeMapper.crystal_type(s)
-        else
-          nil
         end
       end
 

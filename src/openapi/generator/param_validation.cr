@@ -48,7 +48,7 @@ module OpenAPI
       # Maps wildcard range keys ("1XX"–"5XX", case-insensitive) to their representative
       # HTTP status code. Returns nil for specific numeric codes, "default", or other keys.
       private def range_status_code(k : String) : Int32?
-        return nil unless k.size == 3 && k[1].upcase == 'X' && k[2].upcase == 'X'
+        return unless k.size == 3 && k[1].upcase == 'X' && k[2].upcase == 'X'
         k[0].to_i?.try { |d| d * 100 }
       end
 
@@ -63,9 +63,9 @@ module OpenAPI
       private def ref_schema_has_valid_method?(ref : String) : Bool
         ref_name = ref.split("/").last
         schema = @doc.try(&.components).try(&.schemas).try(&.[ref_name]?).try(&.value) || return false
-        (schema.properties || {} of String => Model::OrRef(Model::Schema)).any? { |_, or_ref|
+        (schema.properties || {} of String => Model::OrRef(Model::Schema)).any? do |_, or_ref|
           schema_has_constraints?(or_ref)
-        }
+        end
       end
 
       private def body_has_validation?(operation : Model::Operation) : Bool
@@ -91,9 +91,9 @@ module OpenAPI
 
       private def resolve_params(list : Array(Model::OrRef(Model::Parameter))?) : Array(Model::Parameter)
         (list || [] of Model::OrRef(Model::Parameter)).compact_map do |or_ref|
-          or_ref.value || or_ref.ref.try { |r|
+          or_ref.value || or_ref.ref.try do |r|
             @doc.try(&.components).try(&.parameters).try(&.[r.split("/").last]?).try(&.value)
-          }
+          end
         end
       end
 
@@ -102,9 +102,9 @@ module OpenAPI
         path_item : Model::PathItem? = nil,
       ) : Bool
         all_params = effective_params(path_item, operation)
-        all_params.any? { |p|
+        all_params.any? do |p|
           schema_has_constraints?(p.schema) || (p.location == "query" && p.required?)
-        } || body_has_validation?(operation)
+        end || body_has_validation?(operation)
       end
 
       private def emit_param_constraints(
@@ -121,9 +121,9 @@ module OpenAPI
         # Crystal cannot infer T in `forall T` helpers when the argument is T | Nil.
         # For nullable params, unwrap with `if val = param` so helpers receive a concrete T.
         if nullable
-          b.scope("if #{crystal_name}_val = #{crystal_name}") { |ib|
+          b.scope("if #{crystal_name}_val = #{crystal_name}") do |ib|
             emit_param_constraint_calls(s, field_name, "#{crystal_name}_val", ib)
-          }
+          end
         else
           emit_param_constraint_calls(s, field_name, crystal_name, b)
         end

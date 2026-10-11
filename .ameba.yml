@@ -1,4 +1,5 @@
 Excluded:
+  - lib
   - spec/integration/generated
   - spec/integration/gen_*.cr
   - spec/integration/regen_*.cr

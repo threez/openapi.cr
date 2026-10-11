@@ -26,16 +26,16 @@ module OpenAPI
           operation.responses["200"]? ||
             operation.responses["201"]? ||
             operation.responses.find { |k, _| k.starts_with?("2") }.try(&.last)
-        response = resp_or_ref.try(&.value) || return nil
-        headers = response.headers || return nil
-        return nil if headers.empty?
+        response = resp_or_ref.try(&.value) || return
+        headers = response.headers || return
+        return if headers.empty?
         fields = headers.compact_map do |name, h_or_ref|
-          header = h_or_ref.value || next nil
+          header = h_or_ref.value || next
           crystal_name = NameInflector.safe_identifier(NameInflector.snake_case(name))
           base = resolve_type(header.schema).rchop('?')
           "#{crystal_name}: #{base}?"
         end
-        return nil if fields.empty?
+        return if fields.empty?
         "{ #{fields.join(", ")} }"
       end
 

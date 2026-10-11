@@ -151,7 +151,7 @@ describe "x-extensible-enum" do
     content.should contain("openapi_extensible_enum SizeUnit do")
     content.should contain("    TiB\n")
     content.should contain("    GiB\n")
-    content.should_not contain(%[TiB = new("TiB")])
+    content.should_not contain(%(TiB = new("TiB")))
     # all-caps names: same rule
     content.should contain("openapi_extensible_enum Protocol do")
     content.should contain("    TCP\n")
@@ -328,7 +328,7 @@ describe "default values" do
     content = OpenAPI::Generator::TypesGenerator.new.generate(doc, ctx).first.content
     content.should contain("getter page_size : Int32 = 20")
     content.should contain("getter enabled : Bool = false")
-    content.should contain(%[getter status : String = "active"])
+    content.should contain(%(getter status : String = "active"))
     content.should contain("getter tag : String? = nil")
   end
 end

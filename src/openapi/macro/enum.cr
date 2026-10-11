@@ -50,14 +50,14 @@ macro openapi_enum(name, json = true, yaml = false, xml = false, form = nil, mul
     {% end %}
   {% end %}
 
-  enum {{name.id}}
+  enum {{ name.id }}
     # Emit member names only — strip string wire assignments (invalid in enum
     # bodies), pass integer assignments through (valid Crystal enum syntax).
     {% for expr in exprs %}
       {% if expr.is_a?(Assign) && expr.value.is_a?(StringLiteral) %}
-        {{expr.target.id}}
+        {{ expr.target.id }}
       {% else %}
-        {{expr}}
+        {{ expr }}
       {% end %}
     {% end %}
 
@@ -67,7 +67,7 @@ macro openapi_enum(name, json = true, yaml = false, xml = false, form = nil, mul
       {% else %}
       case self
       {% for wire, member in mapping %}
-      when {{member.id}} then {{wire}}
+      when {{ member.id }} then {{ wire }}
       {% end %}
       else to_s.downcase
       end
@@ -79,16 +79,16 @@ macro openapi_enum(name, json = true, yaml = false, xml = false, form = nil, mul
       value = pull.{% if is_int %}read_int{% else %}read_string{% end %}
       case value
       {% for wire, member in mapping %}
-      when {% if is_int %}{{wire.id}}{% else %}{{wire}}{% end %} then {{member.id}}
+      when {% if is_int %}{{ wire.id }}{% else %}{{ wire }}{% end %} then {{ member.id }}
       {% end %}
-      else raise ::JSON::ParseException.new("Unknown {{name.id}}: #{value}", 0, 0)
+      else raise ::JSON::ParseException.new("Unknown {{ name.id }}: #{value}", 0, 0)
       end
     end
 
     def to_json(builder : ::JSON::Builder)
       (case self
       {% for wire, member in mapping %}
-      when {{member.id}} then {% if is_int %}{{wire.id}}{% else %}{{wire}}{% end %}
+      when {{ member.id }} then {% if is_int %}{{ wire.id }}{% else %}{{ wire }}{% end %}
       {% end %}
       else {% if is_int %}value.to_i64{% else %}to_s.downcase{% end %}
       end).to_json(builder)
@@ -151,9 +151,9 @@ macro openapi_extensible_enum(name, json = true, yaml = false, xml = false, form
     {% end %}
   {% end %}
 
-  struct {{name.id}}
+  struct {{ name.id }}
     {% for wire, member in mapping %}
-    {{member.id}} = new({{wire}})
+    {{ member.id }} = new({{ wire }})
     {% end %}
 
     getter value : String
@@ -163,15 +163,15 @@ macro openapi_extensible_enum(name, json = true, yaml = false, xml = false, form
 
     {% for wire, member in mapping %}
     {% pred = wire.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/^_+/, "") %}
-    def {{pred.id}}? : Bool
-      @value == {{wire}}
+    def {{ pred.id }}? : Bool
+      @value == {{ wire }}
     end
     {% end %}
 
     def known? : Bool
       case @value
       {% for wire, _ in mapping %}
-      when {{wire}} then true
+      when {{ wire }} then true
       {% end %}
       else false
       end
@@ -188,7 +188,7 @@ macro openapi_extensible_enum(name, json = true, yaml = false, xml = false, form
     def unknown? : Bool
       case @value
       {% for wire, _ in mapping %}
-      when {{wire}} then false
+      when {{ wire }} then false
       {% end %}
       else true
       end
@@ -225,7 +225,7 @@ macro openapi_extensible_enum(name, json = true, yaml = false, xml = false, form
     end
 
     {% if form %}
-    include {{form.id}}
+    include {{ form.id }}
 
     def self.from_form_params(params : ::HTTP::Params, prefix : String? = nil) : self
       new(prefix ? params[prefix] : params["value"])

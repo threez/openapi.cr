@@ -23,9 +23,9 @@ module OpenAPI
         end
 
         def self.pascal_case(str : String) : String
-          snake_case(str).split('_').map { |w|
+          snake_case(str).split('_').map do |w|
             w.empty? ? w : w[0].upcase.to_s + w[1..]
-          }.join
+          end.join
         end
 
         def self.safe_identifier(str : String) : String
@@ -48,7 +48,7 @@ module OpenAPI
             pascal_case(snake_case(op_id))
           else
             parts = path_template.split("/").compact_map do |segment|
-              next nil if segment.empty?
+              next if segment.empty?
               if segment.starts_with?('{') && segment.ends_with?('}')
                 "by_#{snake_case(segment[1..-2])}"
               else

@@ -71,9 +71,9 @@ module OpenAPI
           doc.each_path_item do |path_template, path_item|
             path_item.each_operation do |http_method, operation|
               if rb_schema = inline_object_schema(
-                   operation.request_body.try(&.value).try(&.content).try { |c|
+                   operation.request_body.try(&.value).try(&.content).try do |c|
                      c[pick_content_key(c) || ""]?.try(&.schema)
-                   })
+                   end)
                 name = NameInflector.operation_type_name(
                   operation.operation_id, http_method, path_template) + "Request"
                 unless seen.includes?(name) || hooks.skip?(name, rb_schema)
@@ -189,10 +189,10 @@ module OpenAPI
         end
 
         private def self.inline_object_schema(or_ref : Model::OrRef(Model::Schema)?) : Model::Schema?
-          return nil unless or_ref
-          return nil if or_ref.ref
-          s = or_ref.value || return nil
-          return nil unless s.type == "object" && s.properties
+          return unless or_ref
+          return if or_ref.ref
+          s = or_ref.value || return
+          return unless s.type == "object" && s.properties
           s
         end
 
@@ -211,9 +211,9 @@ module OpenAPI
             operation.responses["200"]? ||
               operation.responses["201"]? ||
               operation.responses.find { |k, _| k.starts_with?("2") }.try(&.last)
-          return nil unless resp_or_ref
-          response = resp_or_ref.value || return nil
-          content = response.content || return nil
+          return unless resp_or_ref
+          response = resp_or_ref.value || return
+          content = response.content || return
           content[pick_content_key(content) || ""]?.try(&.schema)
         end
 
@@ -233,18 +233,18 @@ module OpenAPI
         end
 
         private def self.resolve_parameter(doc : Model::Document, or_ref : Model::OrRef(Model::Parameter)) : Model::Parameter?
-          or_ref.value || or_ref.ref.try { |r|
+          or_ref.value || or_ref.ref.try do |r|
             doc.components.try(&.parameters).try(&.[r.split("/").last]?).try(&.value)
-          }
+          end
         end
 
         private def self.resolve_response(
           doc : Model::Document,
           or_ref : Model::OrRef(Model::Response),
         ) : Model::Response?
-          or_ref.value || or_ref.ref.try { |r|
+          or_ref.value || or_ref.ref.try do |r|
             doc.components.try(&.responses.try(&.[r.split("/").last]?)).try(&.value)
-          }
+          end
         end
 
         private def self.use_struct?(schema : Model::Schema) : Bool
