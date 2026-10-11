@@ -7,6 +7,8 @@ tagged via `make tag`).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-11
+
 - Upgraded `ameba` dev dependency from `~> 1.6.0` to `~> 1.7.0`.
 - Refreshed `crystina` and `mux` dependencies (no public API changes).
 - Fixed `.ameba.yml`: the custom top-level `Excluded:` list was overriding
