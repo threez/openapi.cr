@@ -10,7 +10,7 @@ shards:
 
   crystina:
     git: https://github.com/threez/crystina.cr.git
-    version: 1.0.1
+    version: 1.0.2
 
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
@@ -22,7 +22,7 @@ shards:
 
   mux:
     git: https://github.com/threez/mux.cr.git
-    version: 0.1.1
+    version: 0.1.2
 
   radix:
     git: https://github.com/luislavena/radix.git
