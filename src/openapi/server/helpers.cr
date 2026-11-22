@@ -1,3 +1,4 @@
+require "http/headers"
 require "http/formdata"
 
 module OpenAPI
